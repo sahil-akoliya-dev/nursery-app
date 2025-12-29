@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Nursery App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased">
+    <div id="header-placeholder"></div>
+
+    <!-- Cart Content -->
+    <div class="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[60vh]">
+        <h1 class="text-4xl font-display font-bold text-earth-900 mb-8">Shopping Cart</h1>
+
+        <div x-data class="flex flex-col lg:flex-row gap-8">
+            <!-- Cart Items -->
+            <div class="flex-1">
+                <template x-if="$store.cart.items.length === 0">
+                    <div class="text-center py-12 glass-card rounded-2xl">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                            <i data-lucide="shopping-bag" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-earth-900 mb-2">Your cart is empty</h3>
+                        <p class="text-gray-500 mb-6">Looks like you haven't added any plants yet.</p>
+                        <a href="/shop"
+                            class="inline-block bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors font-bold">
+                            Start Shopping
+                        </a>
+                    </div>
+                </template>
+
+                <div x-show="$store.cart.items.length > 0" class="space-y-4">
+                    <template x-for="item in $store.cart.items" :key="item.id">
+                        <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+                            <!-- Image -->
+                            <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                <img :src="item.image || 'https://via.placeholder.com/100?text=No+Image'"
+                                    :alt="item.name" onerror="this.src='https://via.placeholder.com/100?text=No+Image'"
+                                    class="w-full h-full object-cover">
+                            </div>
+
+                            <!-- Details -->
+                            <div class="flex-1">
+                                <h3 class="font-bold text-earth-900 text-lg" x-text="item.name"></h3>
+                                <p class="text-sm text-gray-500 mb-2" x-text="'₹' + item.price"></p>
+                            </div>
+
+                            <!-- Quantity -->
+                            <div class="flex items-center border border-gray-200 rounded-lg">
+                                <button @click="$store.cart.updateQuantity(item.id, item.quantity - 1)"
+                                    class="px-3 py-1 text-gray-500 hover:text-primary-600 transition-colors">-</button>
+                                <span class="px-2 font-medium text-earth-900" x-text="item.quantity"></span>
+                                <button @click="$store.cart.updateQuantity(item.id, item.quantity + 1)"
+                                    class="px-3 py-1 text-gray-500 hover:text-primary-600 transition-colors">+</button>
+                            </div>
+
+                            <!-- Total & Remove -->
+                            <div class="text-right ml-4">
+                                <div class="font-bold text-primary-700 text-lg mb-1"
+                                    x-text="'₹' + (item.price * item.quantity).toFixed(2)"></div>
+                                <button @click="$store.cart.remove(item.id)"
+                                    class="text-red-500 hover:text-red-700 text-sm flex items-center gap-1 justify-end">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="w-full lg:w-96" x-show="$store.cart.items.length > 0">
+                <div class="glass-card p-6 rounded-2xl sticky top-32">
+                    <h3 class="text-xl font-bold text-earth-900 mb-6">Order Summary</h3>
+
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Subtotal</span>
+                            <span x-text="'₹' + $store.cart.total.toFixed(2)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Shipping</span>
+                            <span class="text-green-600">Free</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax (8%)</span>
+                            <span x-text="'₹' + ($store.cart.total * 0.08).toFixed(2)"></span>
+                        </div>
+                        <div class="border-t pt-4 flex justify-between font-bold text-lg">
+                            <span>Total</span>
+                            <span x-text="'₹' + ($store.cart.total * 1.08).toFixed(2)"></span>
+                        </div>
+                    </div>
+
+                    <a href="/checkout"
+                        class="block w-full btn-shine bg-primary-600 text-white font-bold py-4 rounded-xl hover:bg-primary-700 transition-all text-center mb-4">
+                        Proceed to Checkout
+                    </a>
+
+                    <div class="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                        <span>Secure Checkout</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+            lucide.createIcons();
+            AOS.init();
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

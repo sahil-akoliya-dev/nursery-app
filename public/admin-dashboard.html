@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Nursery App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-900 antialiased" x-data="{ 
+        sidebarOpen: false,
+        activeTab: 'dashboard',
+        stats: {
+            sales: 0,
+            orders: 0,
+            customers: 0,
+            growth: 0
+        },
+        revenueTrends: [],
+        orderStatus: {},
+        users: [],
+        vendors: [],
+        logs: [],
+        recentOrders: [],
+        
+        // Product Management State
+        products: [],
+        categories: [],
+        mediaFiles: [],
+        showProductModal: false,
+        showMediaModal: false,
+        isEditing: false,
+        productForm: { 
+            id: null,
+            name: '', 
+            price: '', 
+            stock_quantity: '', 
+            category_id: '', 
+            description: '',
+            images: [''], // Array of strings (URLs)
+            is_active: true 
+        },
+        pagination: {
+            current_page: 1,
+            last_page: 1,
+            total: 0
+        },
+
+        // Orders & Users State
+        orders: [],
+        users: [],
+        paginationOrders: { current_page: 1, last_page: 1, total: 0 },
+        paginationUsers: { current_page: 1, last_page: 1, total: 0 },
+        
+        // View Modals State
+        showOrderModal: false,
+        selectedOrder: null,
+        showUserModal: false,
+        selectedUser: null,
+
+        get pageTitle() {
+            return this.activeTab.charAt(0).toUpperCase() + this.activeTab.slice(1);
+        },
+
+        async init() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const authStore = Alpine.store('auth');
+            if (!authStore.isAuthenticated || !authStore.isAdmin()) {
+                window.location.href = '/';
+                return;
+            }
+
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Load initial data
+            await this.fetchStats();
+            await this.fetchOrders(); 
+            // Reuse fetchOrders for the tab if needed, but recentOrders is separate for dashboard
+            // actually let's load the main lists too
+            await this.fetchOrdersList();
+            await this.fetchUsers();
+            await this.fetchProducts();
+            await this.fetchCategories();
+            lucide.createIcons();
+        },
+
+        async fetchStats() {
+            try {
+                const res = await axios.get('/api/admin/analytics/dashboard');
+                const data = res.data.data;
+                this.stats = {
+                    sales: data.sales.total_revenue,
+                    orders: data.sales.total_orders,
+                    customers: data.customers.total,
+                    growth: data.sales.revenue_growth
+                };
+                this.revenueTrends = data.revenue_trends;
+                this.orderStatus = data.order_status;
+                this.renderCharts();
+            } catch (e) { console.error('Stats error:', e); }
+        },
+
+        async fetchOrders() {
+            // For dashboard widget
+            try {
+                const res = await axios.get('/api/admin/orders?per_page=5');
+                this.recentOrders = res.data.data;
+            } catch (e) { console.error(e); }
+        },
+
+        async fetchOrdersList(page = 1) {
+            try {
+                const res = await axios.get(`/api/admin/orders?page=${page}&per_page=10`);
+                this.orders = res.data.data;
+                this.paginationOrders = res.data.meta;
+            } catch (e) { console.error('Fetch orders error:', e); }
+        },
+
+        async updateOrderStatus(orderId, newStatus) {
+            try {
+                await axios.put(`/api/admin/orders/${orderId}/status`, { status: newStatus });
+                // alert('Order status updated');
+                this.fetchOrdersList(this.paginationOrders.current_page);
+                this.fetchStats(); // Update stats too
+            } catch(e) {
+                alert('Failed to update status: ' + (e.response?.data?.message || e.message));
+            }
+        },
+
+        async viewOrder(order) {
+            // Fetch full details including items/address if not present, but for now assuming list has enough or fetching detailed
+            try {
+                // Determine if we need to fetch details. The list format might be lean.
+                // Let's just try to fetch the single order to be sure we get items.
+                const res = await axios.get(`/api/admin/orders/${order.id}`);
+                this.selectedOrder = res.data.data;
+                this.showOrderModal = true;
+            } catch (e) {
+                alert('Failed to fetch order details');
+            }
+        },
+
+        async viewUser(user) {
+            this.selectedUser = user;
+            this.showUserModal = true;
+        },
+
+        async fetchUsers(page = 1) {
+            try {
+                const res = await axios.get(`/api/admin/users?page=${page}&per_page=10`);
+                this.users = res.data.data;
+                this.paginationUsers = res.data.meta;
+            } catch (e) { console.error('Fetch users error:', e); }
+        },
+
+        async fetchProducts(page = 1) {
+            try {
+                const res = await axios.get(`/api/admin/products?page=${page}&per_page=10`);
+                this.products = res.data.data;
+                this.pagination = res.data.meta;
+            } catch (e) { 
+                console.error('Fetch products error:', e);
+                // alert('Failed to load products.');
+            }
+        },
+
+        async fetchCategories() {
+            try {
+                const res = await axios.get('/api/categories');
+                this.categories = res.data.data;
+            } catch (e) { console.error('Fetch categories error:', e); }
+        },
+
+        async fetchMedia() {
+            try {
+                const res = await axios.get('/api/admin/media');
+                this.mediaFiles = res.data.data;
+            } catch (e) { console.error('Fetch media error:', e); }
+        },
+
+        async uploadImage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('image', file);
+            try {
+                const res = await axios.post('/api/admin/media', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                this.mediaFiles.push(res.data.data);
+                alert('Image uploaded successfully');
+            } catch (e) {
+                console.error(e);
+                alert('Upload failed: ' + (e.response?.data?.message || e.message));
+            }
+        },
+
+        openMediaModal() {
+            this.fetchMedia();
+            this.showMediaModal = true;
+        },
+
+        selectImage(url) {
+            this.productForm.images[0] = url;
+            this.showMediaModal = false;
+        },
+
+        renderCharts() {
+            const ctxRevenue = document.getElementById('revenueChart')?.getContext('2d');
+            if(ctxRevenue) {
+                const labels = this.revenueTrends.map(t => t.month_name).reverse();
+                const data = this.revenueTrends.map(t => t.revenue).reverse();
+                new Chart(ctxRevenue, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data,
+                            borderColor: '#16a34a',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
+
+            const ctxStatus = document.getElementById('statusChart')?.getContext('2d');
+            if(ctxStatus) {
+                new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Completed', 'Processing', 'Shipped', 'Cancelled'],
+                        datasets: [{
+                            data: [
+                                this.orderStatus.delivered || 0, 
+                                this.orderStatus.processing || 0, 
+                                this.orderStatus.shipped || 0, 
+                                this.orderStatus.cancelled || 0
+                            ],
+                            backgroundColor: ['#16a34a', '#facc15', '#3b82f6', '#ef4444']
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+        },
+
+        // Product Actions
+        openProductModal() {
+            this.isEditing = false;
+            this.productForm = {
+                id: null,
+                name: '',
+                price: '',
+                stock_quantity: '',
+                category_id: this.categories.length > 0 ? this.categories[0].id : '',
+                description: '',
+                images: [''],
+                is_active: true
+            };
+            this.showProductModal = true;
+        },
+
+        editProduct(product) {
+            this.isEditing = true;
+            this.productForm = {
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                stock_quantity: product.stock_quantity,
+                category_id: product.category ? product.category.id : '',
+                description: product.description,
+                images: product.images && product.images.length > 0 ? product.images : [''],
+                is_active: product.is_active
+            };
+            this.showProductModal = true;
+        },
+
+        async saveProduct() {
+            try {
+                const payload = { ...this.productForm };
+                // Filter empty image strings
+                payload.images = payload.images.filter(url => url.trim() !== '');
+                
+                if (this.isEditing) {
+                    await axios.put(`/api/admin/products/${this.productForm.id}`, payload);
+                    alert('Product updated successfully');
+                } else {
+                    await axios.post('/api/admin/products', payload);
+                    alert('Product created successfully');
+                }
+                this.showProductModal = false;
+                this.fetchProducts(this.pagination.current_page);
+            } catch (e) {
+                console.error(e);
+                alert('Detailed Error: ' + (e.response?.data?.message || e.message));
+            }
+        },
+
+        async deleteProduct(id) {
+            if(!confirm('Are you sure you want to delete this product?')) return;
+            try {
+                await axios.delete(`/api/admin/products/${id}`);
+                this.fetchProducts(this.pagination.current_page);
+            } catch(e) {
+                alert('Failed to delete: ' + (e.response?.data?.message || e.message));
+            }
+        },
+
+        async saveSettings() {
+             // ... existing logic ...
+             alert('Save settings logic placeholder');
+        },
+        async triggerBackup() {
+            if(!confirm('Start database backup?')) return;
+            try {
+                await axios.post('/api/admin/backup');
+                alert('Backup scheduled');
+            } catch(e) { alert('Backup failed'); }
+        }
+    }">
+
+    <div class="min-h-screen flex">
+        <!-- Sidebar -->
+        <aside
+            class="bg-white w-64 border-r border-gray-200 fixed h-full z-20 transition-transform duration-300 transform lg:translate-x-0"
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+            <div class="h-20 flex items-center px-8 border-b border-gray-100">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white">
+                        <i data-lucide="leaf" class="w-4 h-4"></i>
+                    </div>
+                    <span class="font-display font-bold text-xl text-primary-900">Nursery<span
+                            class="text-primary-600">Admin</span></span>
+                </a>
+            </div>
+            <nav class="p-4 space-y-1" x-cloak>
+                <button @click="activeTab = 'dashboard'" x-show="Alpine.store('auth').hasPermission('analytics.view')"
+                    :class="{'bg-primary-50 text-primary-600': activeTab === 'dashboard', 'text-gray-600 hover:bg-gray-50': activeTab !== 'dashboard'}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                </button>
+                <button @click="activeTab = 'orders'" x-show="Alpine.store('auth').hasPermission('orders.view')"
+                    :class="{'bg-primary-50 text-primary-600': activeTab === 'orders', 'text-gray-600 hover:bg-gray-50': activeTab !== 'orders'}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i> Orders
+                </button>
+                <button @click="activeTab = 'products'" x-show="Alpine.store('auth').hasPermission('products.view')"
+                    :class="{'bg-primary-50 text-primary-600': activeTab === 'products', 'text-gray-600 hover:bg-gray-50': activeTab !== 'products'}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="package" class="w-5 h-5"></i> Products
+                </button>
+                <button @click="activeTab = 'users'" x-show="Alpine.store('auth').hasPermission('users.view')"
+                    :class="{'bg-primary-50 text-primary-600': activeTab === 'users', 'text-gray-600 hover:bg-gray-50': activeTab !== 'users'}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="users" class="w-5 h-5"></i> Users
+                </button>
+                <button @click="activeTab = 'vendors'" x-show="Alpine.store('auth').hasPermission('vendors.view')"
+                    :class="{'bg-primary-50 text-primary-600': activeTab === 'vendors', 'text-gray-600 hover:bg-gray-50': activeTab !== 'vendors'}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="store" class="w-5 h-5"></i> Vendors
+                </button>
+                <button @click="activeTab = 'logs'" x-show="Alpine.store('auth').hasPermission('system.audit_logs')"
+                    :class="{'bg-primary-50 text-primary-600': activeTab === 'logs', 'text-gray-600 hover:bg-gray-50': activeTab !== 'logs'}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Audit Logs
+                </button>
+                <button @click="activeTab = 'settings'" x-show="Alpine.store('auth').hasPermission('system.settings')"
+                    :class="{'bg-primary-50 text-primary-600': activeTab === 'settings', 'text-gray-600 hover:bg-gray-50': activeTab !== 'settings'}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="settings" class="w-5 h-5"></i> Settings
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 lg:ml-64 flex flex-col">
+            <!-- Topbar -->
+            <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+                <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-500">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h1 class="text-2xl font-bold text-gray-800 hidden lg:block" x-text="pageTitle + ' Overview'"></h1>
+                <div class="flex items-center gap-4">
+                    <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                        <i data-lucide="bell" class="w-6 h-6"></i>
+                        <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold">
+                            A</div>
+                        <div class="hidden md:block">
+                            <p class="text-sm font-bold text-gray-900" x-text="$store.auth.user?.name || 'Admin User'">
+                            </p>
+                            <p class="text-xs text-gray-500" x-text="$store.auth.user?.role || 'Admin'"></p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="p-8 overflow-y-auto">
+
+                <!-- DASHBOARD TAB -->
+                <div x-show="activeTab === 'dashboard'">
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Revenue</p>
+                                    <h3 class="text-2xl font-bold text-gray-900"
+                                        x-text="'₹' + (stats.sales || 0).toLocaleString()"></h3>
+                                </div>
+                                <div class="p-2 bg-green-50 text-green-600 rounded-lg">
+                                    <i data-lucide="indian-rupee" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Orders</p>
+                                    <h3 class="text-2xl font-bold text-gray-900" x-text="stats.orders || 0"></h3>
+                                </div>
+                                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">New Customers</p>
+                                    <h3 class="text-2xl font-bold text-gray-900" x-text="stats.customers || 0"></h3>
+                                </div>
+                                <div class="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                                    <i data-lucide="users" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Avg. Order Value</p>
+                                    <h3 class="text-2xl font-bold text-gray-900">$85.40</h3>
+                                </div>
+                                <div class="p-2 bg-orange-50 text-orange-600 rounded-lg">
+                                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-900 mb-6">Revenue Overview</h3>
+                            <canvas id="revenueChart" height="300"></canvas>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-900 mb-6">Order Status</h3>
+                            <canvas id="statusChart" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Orders Table -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-900">Recent Orders</h3>
+                            <button @click="activeTab = 'orders'"
+                                class="text-sm text-primary-600 hover:text-primary-700 font-medium">View All</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-500">
+                                    <tr>
+                                        <th class="px-6 py-4">Order ID</th>
+                                        <th class="px-6 py-4">Customer</th>
+                                        <th class="px-6 py-4">Date</th>
+                                        <th class="px-6 py-4">Amount</th>
+                                        <th class="px-6 py-4">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <template x-for="order in recentOrders" :key="order.id">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 font-medium text-gray-900" x-text="order.order_number">
+                                            </td>
+                                            <td class="px-6 py-4" x-text="order.user ? order.user.name : 'Guest'"></td>
+                                            <td class="px-6 py-4 text-gray-500"
+                                                x-text="new Date(order.created_at).toLocaleDateString()"></td>
+                                            <td class="px-6 py-4"
+                                                x-text="'$' + parseFloat(order.total_amount).toFixed(2)"></td>
+                                            <td class="px-6 py-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium capitalize"
+                                                    :class="{
+                                                        'bg-green-100 text-green-700': order.status === 'delivered',
+                                                        'bg-blue-100 text-blue-700': order.status === 'shipped',
+                                                        'bg-yellow-100 text-yellow-700': order.status === 'processing' || order.status === 'pending',
+                                                        'bg-red-100 text-red-700': order.status === 'cancelled'
+                                                    }" x-text="order.status">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ORDERS TAB -->
+                <div x-show="activeTab === 'orders'">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Orders</h2>
+                        <div class="flex gap-2">
+                            <!-- Export button placeholder -->
+                            <button
+                                class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition">
+                                <i data-lucide="download" class="w-4 h-4"></i> Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-500">
+                                    <tr>
+                                        <th class="px-6 py-4">Order ID</th>
+                                        <th class="px-6 py-4">Customer</th>
+                                        <th class="px-6 py-4">Date</th>
+                                        <th class="px-6 py-4">Method</th>
+                                        <th class="px-6 py-4">Total</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <template x-for="order in orders" :key="order.id">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 font-medium text-gray-900" x-text="order.order_number">
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div x-show="order.user">
+                                                    <p class="font-medium text-gray-900" x-text="order.user.name"></p>
+                                                    <p class="text-xs text-gray-500" x-text="order.user.email"></p>
+                                                </div>
+                                                <div x-show="!order.user">Guest</div>
+                                            </td>
+                                            <td class="px-6 py-4 text-gray-500"
+                                                x-text="new Date(order.created_at).toLocaleDateString()"></td>
+                                            <td class="px-6 py-4">
+                                                <span
+                                                    class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 uppercase"
+                                                    x-text="order.payment_method"></span>
+                                            </td>
+                                            <td class="px-6 py-4 font-medium" x-text="'₹' + order.total_amount"></td>
+                                            <td class="px-6 py-4">
+                                                <select @change="updateOrderStatus(order.id, $event.target.value)"
+                                                    class="text-xs font-medium rounded-full px-2 py-1 border-0 ring-1 ring-inset focus:ring-2 focus:ring-primary-600 bg-transparent"
+                                                    :class="{
+                                                        'bg-green-50 text-green-700 ring-green-600/20': order.status === 'delivered',
+                                                        'bg-blue-50 text-blue-700 ring-blue-600/20': order.status === 'shipped',
+                                                        'bg-yellow-50 text-yellow-800 ring-yellow-600/20': order.status === 'processing' || order.status === 'pending',
+                                                        'bg-red-50 text-red-700 ring-red-600/20': order.status === 'cancelled'
+                                                    }">
+                                                    <option value="pending" :selected="order.status === 'pending'">
+                                                        Pending</option>
+                                                    <option value="processing"
+                                                        :selected="order.status === 'processing'">Processing</option>
+                                                    <option value="shipped" :selected="order.status === 'shipped'">
+                                                        Shipped</option>
+                                                    <option value="delivered" :selected="order.status === 'delivered'">
+                                                        Delivered</option>
+                                                    <option value="cancelled" :selected="order.status === 'cancelled'">
+                                                        Cancelled</option>
+                                                </select>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <button @click="viewOrder(order)"
+                                                    class="text-primary-600 hover:text-primary-900">View</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="orders.length === 0">
+                                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">No orders found.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="p-4 border-t border-gray-100 flex justify-between items-center"
+                            x-show="paginationOrders.last_page > 1">
+                            <button @click="fetchOrdersList(paginationOrders.current_page - 1)"
+                                :disabled="paginationOrders.current_page <= 1"
+                                class="px-3 py-1 border rounded text-sm disabled:opacity-50">Previous</button>
+                            <span class="text-sm text-gray-500"
+                                x-text="'Page ' + paginationOrders.current_page + ' of ' + paginationOrders.last_page"></span>
+                            <button @click="fetchOrdersList(paginationOrders.current_page + 1)"
+                                :disabled="paginationOrders.current_page >= paginationOrders.last_page"
+                                class="px-3 py-1 border rounded text-sm disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCTS TAB -->
+                <div x-show="activeTab === 'products'">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Products</h2>
+                        <button @click="openProductModal"
+                            class="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add Product
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-500">
+                                    <tr>
+                                        <th class="px-6 py-4">Image</th>
+                                        <th class="px-6 py-4">Name</th>
+                                        <th class="px-6 py-4">Category</th>
+                                        <th class="px-6 py-4">Price</th>
+                                        <th class="px-6 py-4">Stock</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <template x-for="product in products" :key="product.id">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4">
+                                                <img :src="product.images && product.images[0] ? product.images[0] : 'https://placehold.co/100'"
+                                                    class="w-10 h-10 rounded-lg object-cover bg-gray-100">
+                                            </td>
+                                            <td class="px-6 py-4 font-medium text-gray-900" x-text="product.name"></td>
+                                            <td class="px-6 py-4"
+                                                x-text="product.category ? product.category.name : '-'"></td>
+                                            <td class="px-6 py-4" x-text="'₹' + product.price"></td>
+                                            <td class="px-6 py-4">
+                                                <span
+                                                    :class="{'text-red-500': product.stock_quantity <= 0, 'text-green-600': product.stock_quantity > 0}"
+                                                    x-text="product.stock_quantity + (product.stock_quantity <= 0 ? ' (Out)' : ' in stock')">
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                                    :class="product.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                                                    x-text="product.is_active ? 'Active' : 'Inactive'">
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <button @click="editProduct(product)"
+                                                        class="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                                    </button>
+                                                    <button @click="deleteProduct(product.id)"
+                                                        class="p-1 text-red-600 hover:bg-red-50 rounded">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="products.length === 0">
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">No products found.
+                                            Add one to get started.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Simple Pagination -->
+                        <div class="p-4 border-t border-gray-100 flex justify-between items-center"
+                            x-show="pagination.last_page > 1">
+                            <button @click="fetchProducts(pagination.current_page - 1)"
+                                :disabled="pagination.current_page <= 1"
+                                class="px-3 py-1 border rounded text-sm disabled:opacity-50">Previous</button>
+                            <span class="text-sm text-gray-500"
+                                x-text="'Page ' + pagination.current_page + ' of ' + pagination.last_page"></span>
+                            <button @click="fetchProducts(pagination.current_page + 1)"
+                                :disabled="pagination.current_page >= pagination.last_page"
+                                class="px-3 py-1 border rounded text-sm disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USERS TAB -->
+                <div x-show="activeTab === 'users'">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Users</h2>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-500">
+                                    <tr>
+                                        <th class="px-6 py-4">Name</th>
+                                        <th class="px-6 py-4">Email</th>
+                                        <th class="px-6 py-4">Role</th>
+                                        <th class="px-6 py-4">Orders</th>
+                                        <th class="px-6 py-4">Joined</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <template x-for="user in users" :key="user.id">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 font-medium text-gray-900" x-text="user.name"></td>
+                                            <td class="px-6 py-4 text-gray-500" x-text="user.email"></td>
+                                            <td class="px-6 py-4">
+                                                <span
+                                                    class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                                    x-text="user.role"></span>
+                                            </td>
+                                            <td class="px-6 py-4 text-gray-500" x-text="user.orders_count || 0"></td>
+                                            <td class="px-6 py-4 text-gray-500"
+                                                x-text="new Date(user.created_at).toLocaleDateString()"></td>
+                                            <td class="px-6 py-4 text-right">
+                                                <button @click="viewUser(user)"
+                                                    class="text-gray-400 hover:text-gray-600">
+                                                    <i data-lucide="eye" class="w-5 h-5"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="users.length === 0">
+                                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">No users found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="p-4 border-t border-gray-100 flex justify-between items-center"
+                            x-show="paginationUsers.last_page > 1">
+                            <button @click="fetchUsers(paginationUsers.current_page - 1)"
+                                :disabled="paginationUsers.current_page <= 1"
+                                class="px-3 py-1 border rounded text-sm disabled:opacity-50">Previous</button>
+                            <span class="text-sm text-gray-500"
+                                x-text="'Page ' + paginationUsers.current_page + ' of ' + paginationUsers.last_page"></span>
+                            <button @click="fetchUsers(paginationUsers.current_page + 1)"
+                                :disabled="paginationUsers.current_page >= paginationUsers.last_page"
+                                class="px-3 py-1 border rounded text-sm disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VENDORS TAB -->
+                <div x-show="activeTab === 'vendors'" class="text-center py-20">
+                    <i data-lucide="store" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-700">Vendors Management</h3>
+                    <p class="text-gray-500">Coming soon.</p>
+                </div>
+
+                <!-- LOGS TAB -->
+                <div x-show="activeTab === 'logs'" class="text-center py-20">
+                    <i data-lucide="file-text" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-700">Audit Logs</h3>
+                    <p class="text-gray-500">Coming soon.</p>
+                </div>
+
+                <!-- SETTINGS TAB -->
+                <div x-show="activeTab === 'settings'" class="max-w-4xl mx-auto space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">System Settings</h3>
+                        <form @submit.prevent="saveSettings">
+                            <div class="space-y-4">
+                                <p class="text-gray-500">Settings form placeholder.</p>
+                            </div>
+                            <div
+                                class="mt-6 flex justify-between items-center bg-gray-50 -m-6 p-4 rounded-b-xl border-t border-gray-100">
+                                <button type="button" @click="triggerBackup"
+                                    class="text-red-600 hover:text-red-700 text-sm font-medium">
+                                    Run System Backup
+                                </button>
+                                <button type="submit"
+                                    class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div x-show="showProductModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;"
+        x-transition.opacity>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="showProductModal = false">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <form @submit.prevent="saveProduct">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mb-4 flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-gray-900"
+                                x-text="isEditing ? 'Edit Product' : 'Add New Product'"></h3>
+                            <button type="button" @click="showProductModal = false"
+                                class="text-gray-400 hover:text-gray-500">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700">Product Name</label>
+                                <input type="text" x-model="productForm.name" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700">Category</label>
+                                <select x-model="productForm.category_id" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                                    <template x-for="cat in categories" :key="cat.id">
+                                        <option :value="cat.id" x-text="cat.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700">Price (₹)</label>
+                                <input type="number" step="0.01" x-model="productForm.price" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                            </div>
+
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700">Stock</label>
+                                <input type="number" x-model="productForm.stock_quantity" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                            </div>
+
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700">Image URL</label>
+                                <div class="flex gap-2">
+                                    <input type="text" x-model="productForm.images[0]" placeholder="https://..."
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                                    <button type="button" @click="openMediaModal"
+                                        class="mt-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md border border-gray-300 hover:bg-gray-200">
+                                        Browse
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700">Description</label>
+                                <textarea x-model="productForm.description" rows="3" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"></textarea>
+                            </div>
+
+                            <div class="col-span-2">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" x-model="productForm.is_active"
+                                        class="rounded border-gray-300 text-primary-600 shadow-sm">
+                                    <span class="ml-2 text-sm text-gray-600">Active (Visible to customers)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                            Save Product
+                        </button>
+                        <button type="button" @click="showProductModal = false"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Order Details Modal -->
+    <div x-show="showOrderModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" x-transition.opacity>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="showOrderModal = false">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4" x-if="selectedOrder">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h3 class="text-lg font-medium text-gray-900">Order #<span
+                                x-text="selectedOrder.order_number"></span></h3>
+                        <button type="button" @click="showOrderModal = false" class="text-gray-400 hover:text-gray-500">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Customer</p>
+                            <p class="text-sm text-gray-900"
+                                x-text="selectedOrder.user ? selectedOrder.user.name : 'Guest'"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Date</p>
+                            <p class="text-sm text-gray-900"
+                                x-text="new Date(selectedOrder.created_at).toLocaleString()"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Payment Method</p>
+                            <p class="text-sm text-gray-900 uppercase" x-text="selectedOrder.payment_method"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Status</p>
+                            <p class="text-sm text-gray-900 capitalize" x-text="selectedOrder.status"></p>
+                        </div>
+                    </div>
+
+                    <h4 class="font-medium text-gray-900 mb-2">Items</h4>
+                    <div class="border rounded-md overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="item in selectedOrder.items" :key="item.id">
+                                    <tr>
+                                        <td class="px-4 py-2 text-sm text-gray-900"
+                                            x-text="item.product ? item.product.name : 'Product Deleted'"></td>
+                                        <td class="px-4 py-2 text-sm text-gray-500" x-text="'Qty: ' + item.quantity">
+                                        </td>
+                                        <td class="px-4 py-2 text-sm text-gray-900 text-right"
+                                            x-text="'₹' + item.price"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 text-right">
+                        <p class="text-lg font-bold text-gray-900">Total: ₹<span
+                                x-text="selectedOrder.total_amount"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div x-show="showUserModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" x-transition.opacity>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" @click="showUserModal = false">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6" x-if="selectedUser">
+                    <h3 class="text-lg font-bold mb-4">User Details</h3>
+                    <p><strong>Name:</strong> <span x-text="selectedUser.name"></span></p>
+                    <p><strong>Email:</strong> <span x-text="selectedUser.email"></span></p>
+                    <p><strong>Role:</strong> <span x-text="selectedUser.role"></span></p>
+                    <p><strong>Joined:</strong> <span
+                            x-text="new Date(selectedUser.created_at).toLocaleDateString()"></span></p>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" @click="showUserModal = false"
+                        class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:ml-3 sm:w-auto sm:text-sm">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js?v=debug1"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+    <!-- Media Modal -->
+    <div x-show="showMediaModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" x-transition.opacity>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="showMediaModal = false">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Select Image</h3>
+                        <button type="button" @click="showMediaModal = false" class="text-gray-400 hover:text-gray-500">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Upload Section -->
+                    <div class="mb-6 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50">
+                        <p class="text-sm text-gray-500 mb-2">Upload a new image or select from library</p>
+                        <input type="file" @change="uploadImage" accept="image/*"
+                            class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                    </div>
+
+                    <!-- Image Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
+                        <template x-for="file in mediaFiles" :key="file.name">
+                            <div @click="selectImage(file.url)"
+                                class="cursor-pointer group relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 hover:border-primary-500">
+                                <img :src="file.url" class="w-full h-full object-cover">
+                                <div
+                                    class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+                                    <span
+                                        class="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">Select</span>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate"
+                                    x-text="file.name"></div>
+                            </div>
+                        </template>
+                        <div x-show="mediaFiles.length === 0" class="col-span-4 text-center py-8 text-gray-500">
+                            No images found. Upload one to get started.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

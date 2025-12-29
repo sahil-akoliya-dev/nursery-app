@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Finder - Nursery App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased min-h-screen flex flex-col">
+    <div id="header-placeholder"></div>
+
+
+
+    <!-- Quiz Content -->
+    <div class="flex-1 flex items-center justify-center pt-20 pb-12 px-4" x-data="{
+            step: 1,
+            totalSteps: 4,
+            answers: {},
+            loadingResult: false,
+            result: null,
+            
+            nextStep(key, value) {
+                this.answers[key] = value;
+                if (this.step < this.totalSteps) {
+                    this.animateTransition(() => this.step++);
+                } else {
+                    this.finishQuiz();
+                }
+            },
+            
+            animateTransition(callback) {
+                gsap.to('#quiz-container', {
+                    opacity: 0,
+                    y: -20,
+                    duration: 0.3,
+                    onComplete: () => {
+                        callback();
+                        gsap.fromTo('#quiz-container', 
+                            { opacity: 0, y: 20 }, 
+                            { opacity: 1, y: 0, duration: 0.4 }
+                        );
+                    }
+                });
+            },
+            
+            async finishQuiz() {
+                this.loadingResult = true;
+                this.step = 'loading';
+                
+                try {
+                    // Map answers to backend expected format
+                    const payload = {
+                        light_level: this.answers.light === 'low' ? 'low' : 'bright',
+                        watering_frequency: this.answers.water === 'rarely' ? 'low' : 'normal',
+                        pet_friendly: this.answers.pets === 'yes'
+                    };
+
+                    const response = await api.post('/plant-finder/results', payload);
+                    
+                    if (response.data.success && response.data.data.matches.length > 0) {
+                        // Take the best match
+                        const match = response.data.data.matches[0];
+                        this.result = {
+                            name: match.name,
+                            image: match.image || 'https://images.unsplash.com/photo-1599598425947-70e021653e5c?w=600',
+                            description: match.reason || 'This plant matches your preferences perfectly!',
+                            price: match.price,
+                            id: match.id
+                        };
+                    } else {
+                        // Fallback if no matches
+                         this.result = {
+                            name: 'Peace Lily',
+                            image: 'https://images.unsplash.com/photo-1593691509543-c55ce1407012?w=600',
+                            description: 'A versatile plant that adapts to many conditions.',
+                            price: 24.99,
+                            id: 1
+                        };
+                    }
+
+                    this.loadingResult = false;
+                    this.step = 'result';
+                    
+                    this.$nextTick(() => {
+                        gsap.from('#result-container', { opacity: 0, scale: 0.9, duration: 0.5, ease: 'back.out(1.7)' });
+                        confettiEffect();
+                    });
+
+                } catch (error) {
+                    console.error('Quiz error:', error);
+                    showToast('Failed to get results. Please try again.', 'error');
+                    this.step = 1; // Reset
+                }
+            }
+         }">
+
+        <div id="quiz-container" class="max-w-2xl w-full" x-show="step !== 'loading' && step !== 'result'">
+            <!-- Progress Bar -->
+            <div class="mb-8">
+                <div class="flex justify-between text-sm font-medium text-gray-500 mb-2">
+                    <span x-text="'Question ' + step + ' of ' + totalSteps"></span>
+                    <span x-text="Math.round((step / totalSteps) * 100) + '%'"></span>
+                </div>
+                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-primary-600 transition-all duration-500 ease-out"
+                        :style="'width: ' + ((step / totalSteps) * 100) + '%'"></div>
+                </div>
+            </div>
+
+            <!-- Question 1: Light -->
+            <div x-show="step === 1">
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-earth-900 mb-6 text-center">How much light
+                    does your space get?</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button @click="nextStep('light', 'low')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="cloud" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Low Light</h3>
+                        <p class="text-sm text-gray-500">Dim corners, no direct sun.</p>
+                    </button>
+                    <button @click="nextStep('light', 'medium')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="sun-dim" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Indirect Light</h3>
+                        <p class="text-sm text-gray-500">Bright room, but no harsh rays.</p>
+                    </button>
+                    <button @click="nextStep('light', 'high')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="sun" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Direct Sun</h3>
+                        <p class="text-sm text-gray-500">Sunny windows, lots of light.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question 2: Water -->
+            <div x-show="step === 2" x-cloak>
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-earth-900 mb-6 text-center">How often do you
+                    remember to water?</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button @click="nextStep('water', 'rarely')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="calendar-x" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">I forget often</h3>
+                        <p class="text-sm text-gray-500">Once a month is my limit.</p>
+                    </button>
+                    <button @click="nextStep('water', 'weekly')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="calendar" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Once a week</h3>
+                        <p class="text-sm text-gray-500">I can manage a weekly routine.</p>
+                    </button>
+                    <button @click="nextStep('water', 'daily')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="droplet" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">I love watering</h3>
+                        <p class="text-sm text-gray-500">I enjoy tending to them daily.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question 3: Pets -->
+            <div x-show="step === 3" x-cloak>
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-earth-900 mb-6 text-center">Do you have
+                    pets?</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button @click="nextStep('pets', 'yes')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="dog" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Yes, I have pets</h3>
+                        <p class="text-sm text-gray-500">Need non-toxic plants.</p>
+                    </button>
+                    <button @click="nextStep('pets', 'no')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="home" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">No pets</h3>
+                        <p class="text-sm text-gray-500">Any plant is fine.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question 4: Experience -->
+            <div x-show="step === 4" x-cloak>
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-earth-900 mb-6 text-center">What's your
+                    experience level?</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button @click="nextStep('level', 'beginner')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="sprout" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Beginner</h3>
+                        <p class="text-sm text-gray-500">I've killed a cactus before.</p>
+                    </button>
+                    <button @click="nextStep('level', 'intermediate')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="flower-2" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Intermediate</h3>
+                        <p class="text-sm text-gray-500">I can keep plants alive.</p>
+                    </button>
+                    <button @click="nextStep('level', 'expert')"
+                        class="p-6 bg-white rounded-xl border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all group text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-50 text-gray-600 group-hover:text-primary-600 transition-colors">
+                            <i data-lucide="trees" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Green Thumb</h3>
+                        <p class="text-sm text-gray-500">My home is a jungle.</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="step === 'loading'" class="text-center" x-cloak>
+            <div
+                class="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-6">
+            </div>
+            <h2 class="text-2xl font-bold text-earth-900 mb-2">Finding your perfect match...</h2>
+            <p class="text-gray-500">Analyzing your preferences.</p>
+        </div>
+
+        <!-- Result -->
+        <div id="result-container" x-show="step === 'result'"
+            class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row" x-cloak>
+            <div class="md:w-1/2 relative h-64 md:h-auto">
+                <img :src="result?.image" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden"></div>
+            </div>
+            <div class="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <span class="text-primary-600 font-bold tracking-wider uppercase text-sm mb-2">We found it!</span>
+                <h2 class="text-4xl font-display font-bold text-earth-900 mb-4" x-text="result?.name"></h2>
+                <p class="text-gray-600 leading-relaxed mb-8" x-text="result?.description"></p>
+
+                <div class="flex items-center justify-between mb-8 p-4 bg-earth-50 rounded-xl">
+                    <span class="text-2xl font-bold text-primary-700" x-text="'₹' + result?.price"></span>
+                    <div class="flex gap-2">
+                        <span class="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-600 shadow-sm">Low
+                            Light</span>
+                        <span class="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-600 shadow-sm">Pet
+                            Friendly</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <a :href="'/product-detail?id=' + result?.id"
+                        class="flex-1 bg-primary-600 text-white font-bold py-4 rounded-xl hover:bg-primary-700 transition-all text-center">
+                        View Details
+                    </a>
+                    <button @click="step = 1; answers = {}"
+                        class="px-6 py-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-600 font-medium">
+                        Retake Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+            lucide.createIcons();
+            AOS.init();
+        });
+
+        function confettiEffect() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#22c55e', '#16a34a', '#15803d']
+            });
+        }
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - NurseryApp</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased">
+
+    <!-- Navigation (Same as Index) -->
+    <!-- Navigation -->
+    <div id="header-placeholder"></div>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-24 overflow-hidden">
+        <!-- Liquid Blobs -->
+        <div
+            class="absolute top-0 left-0 w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
+        </div>
+        <div
+            class="absolute bottom-0 right-0 w-96 h-96 bg-secondary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-3xl mx-auto" data-aos="fade-up">
+                <h1 class="text-4xl md:text-6xl font-display font-bold text-earth-900 mb-6">Growing Green <br> <span
+                        class="text-primary-600">Since 2020</span></h1>
+                <p class="text-xl text-earth-700 leading-relaxed">We believe that everyone deserves a little bit of
+                    nature in their lives. Our mission is to make plant parenthood accessible, enjoyable, and
+                    sustainable for everyone.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Cards -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition-transform duration-300"
+                    data-aos="fade-up" data-aos-delay="100">
+                    <div
+                        class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                        <i data-lucide="sprout" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-earth-900 mb-4">Sustainability First</h3>
+                    <p class="text-earth-600">We source our plants from responsible growers and use eco-friendly
+                        packaging for every order.</p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition-transform duration-300"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div
+                        class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
+                        <i data-lucide="droplets" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-earth-900 mb-4">Expert Care</h3>
+                    <p class="text-earth-600">Every plant comes with detailed care instructions, and our team is always
+                        here to help you succeed.</p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition-transform duration-300"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 text-purple-600">
+                        <i data-lucide="heart" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-earth-900 mb-4">Community Driven</h3>
+                    <p class="text-earth-600">We're building a community of plant lovers. Join us for workshops, swaps,
+                        and growing together.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Team -->
+    <section class="py-24 bg-white/50 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-earth-900 mb-4">Meet the Team</h2>
+                <p class="text-earth-800">The green thumbs behind NurseryApp.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Team Member 1 -->
+                <div class="group text-center" data-aos="fade-up" data-aos-delay="100">
+                    <div
+                        class="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden ring-4 ring-white shadow-lg">
+                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80"
+                            alt="Team Member"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div
+                            class="absolute inset-0 bg-primary-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-earth-900">Sarah Johnson</h3>
+                    <p class="text-primary-600 font-medium">Founder & CEO</p>
+                </div>
+                <!-- Team Member 2 -->
+                <div class="group text-center" data-aos="fade-up" data-aos-delay="200">
+                    <div
+                        class="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden ring-4 ring-white shadow-lg">
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80"
+                            alt="Team Member"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div
+                            class="absolute inset-0 bg-primary-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-earth-900">David Chen</h3>
+                    <p class="text-primary-600 font-medium">Head Botanist</p>
+                </div>
+                <!-- Team Member 3 -->
+                <div class="group text-center" data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden ring-4 ring-white shadow-lg">
+                        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80"
+                            alt="Team Member"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div
+                            class="absolute inset-0 bg-primary-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-earth-900">Emily Davis</h3>
+                    <p class="text-primary-600 font-medium">Customer Success</p>
+                </div>
+                <!-- Team Member 4 -->
+                <div class="group text-center" data-aos="fade-up" data-aos-delay="400">
+                    <div
+                        class="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden ring-4 ring-white shadow-lg">
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80"
+                            alt="Team Member"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div
+                            class="absolute inset-0 bg-primary-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-earth-900">Michael Wilson</h3>
+                    <p class="text-primary-600 font-medium">Logistics Manager</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-24">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-earth-900 mb-4">Frequently Asked Questions
+                </h2>
+            </div>
+
+            <div class="space-y-4" x-data="{ active: null }">
+                <!-- FAQ Item 1 -->
+                <div class="glass-card rounded-xl overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+                    <button @click="active = active === 1 ? null : 1"
+                        class="w-full px-6 py-4 text-left flex justify-between items-center focus:outline-none">
+                        <span class="font-bold text-earth-900">Do you ship internationally?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform duration-300"
+                            :class="{ 'rotate-180': active === 1 }"></i>
+                    </button>
+                    <div x-show="active === 1" x-collapse>
+                        <div class="px-6 pb-4 text-earth-600">
+                            Currently, we only ship within the United States to ensure our plants arrive healthy and
+                            happy. We're working on expanding to Canada soon!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="glass-card rounded-xl overflow-hidden" data-aos="fade-up" data-aos-delay="200">
+                    <button @click="active = active === 2 ? null : 2"
+                        class="w-full px-6 py-4 text-left flex justify-between items-center focus:outline-none">
+                        <span class="font-bold text-earth-900">What if my plant arrives damaged?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform duration-300"
+                            :class="{ 'rotate-180': active === 2 }"></i>
+                    </button>
+                    <div x-show="active === 2" x-collapse>
+                        <div class="px-6 pb-4 text-earth-600">
+                            We have a 7-day happiness guarantee! If your plant arrives damaged, simply send us a photo
+                            within 7 days, and we'll send a replacement or offer a full refund.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="glass-card rounded-xl overflow-hidden" data-aos="fade-up" data-aos-delay="300">
+                    <button @click="active = active === 3 ? null : 3"
+                        class="w-full px-6 py-4 text-left flex justify-between items-center focus:outline-none">
+                        <span class="font-bold text-earth-900">How do I know which plant is right for me?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform duration-300"
+                            :class="{ 'rotate-180': active === 3 }"></i>
+                    </button>
+                    <div x-show="active === 3" x-collapse>
+                        <div class="px-6 pb-4 text-earth-600">
+                            Try our <a href="/plant-finder" class="text-primary-600 font-bold hover:underline">Plant
+                                Finder Quiz</a>! It takes less than a minute and recommends plants based on your light
+                            conditions, care style, and pet safety needs.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+
+            // Initialize after components are loaded
+            lucide.createIcons();
+            AOS.init({
+                duration: 800,
+                once: true,
+                offset: 50
+            });
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

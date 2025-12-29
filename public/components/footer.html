@@ -1,0 +1,65 @@
+<footer class="bg-earth-900 text-white pt-20 pb-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            <div class="col-span-1 md:col-span-1">
+                <a href="/" class="flex items-center gap-2 mb-6">
+                    <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white">
+                        <i data-lucide="leaf" class="w-6 h-6"></i>
+                    </div>
+                    <span class="font-display font-bold text-2xl">Nursery<span
+                            class="text-primary-400">App</span></span>
+                </a>
+                <p class="text-gray-400 leading-relaxed">
+                    Bringing the beauty of nature into your home with premium, sustainably grown plants.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-display font-bold text-lg mb-6">Shop</h4>
+                <ul class="space-y-4 text-gray-400">
+                    <li><a href="#" class="hover:text-primary-400 transition-colors">All Plants</a></li>
+                    <li><a href="#" class="hover:text-primary-400 transition-colors">New Arrivals</a></li>
+                    <li><a href="#" class="hover:text-primary-400 transition-colors">Pots & Accessories</a></li>
+                    <li><a href="#" class="hover:text-primary-400 transition-colors">Plant Care</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-display font-bold text-lg mb-6">Company</h4>
+                <ul class="space-y-4 text-gray-400">
+                    <li><a href="/about" class="hover:text-primary-400 transition-colors">About Us</a></li>
+                    <li><a href="#" class="hover:text-primary-400 transition-colors">Sustainability</a></li>
+                    <li><a href="/contact" class="hover:text-primary-400 transition-colors">Contact</a></li>
+                    <li><a href="#" class="hover:text-primary-400 transition-colors">Terms & Conditions</a></li>
+                </ul>
+            </div>
+
+            <div class="col-span-1">
+                <h3 class="text-lg font-bold text-white mb-6">Newsletter</h3>
+                <p class="text-earth-300 mb-4">Subscribe to get special offers, free giveaways, and
+                    once-in-a-lifetime deals.</p>
+                <form class="flex gap-2" x-data="{ email: '' }"
+                    @submit.prevent="axios.post('/api/newsletter/subscribe', { email }).then(() => { alert('Subscribed!'); email = ''; }).catch(() => alert('Failed to subscribe'))">
+                    <input type="email" x-model="email" placeholder="Enter your email"
+                        class="flex-1 px-4 py-2 rounded-lg bg-earth-800 border border-earth-700 text-white focus:outline-none focus:border-primary-500"
+                        required>
+                    <button type="submit"
+                        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                        Join
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-gray-500 text-sm">© 2025 Nursery App. All rights reserved.</p>
+            <div class="flex gap-6">
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="instagram"
+                        class="w-5 h-5"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="facebook"
+                        class="w-5 h-5"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="twitter"
+                        class="w-5 h-5"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>

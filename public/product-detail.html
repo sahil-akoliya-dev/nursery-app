@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail - Nursery App</title>
+
+    <!-- Tailwind CSS with Custom Config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        },
+                        accent: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    },
+                    fontFamily: {
+                        heading: ['Outfit', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="/assets/css/design-system.css">
+
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- AOS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</head>
+
+<body class="font-body antialiased bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <div class="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{
+            product: {},
+            quantity: 1,
+            activeTab: 'description',
+            loading: true,
+            reviews: [],
+            reviewForm: { rating: 5, comment: '' },
+            selectedImage: 0,
+
+            async init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const id = urlParams.get('id');
+                
+                if (!id) {
+                    window.location.href = '/shop.html';
+                    return;
+                }
+
+                await this.fetchProduct(id);
+                await this.fetchProduct(id);
+                await this.fetchReviews(id);
+                this.checkWishlistStatus(id);
+                this.loading = false;
+                this.$nextTick(() => {
+                    lucide.createIcons();
+                    AOS.refresh();
+                });
+            },
+
+            async fetchProduct(id) {
+                try {
+                    const response = await axios.get(`/api/products/${id}`);
+                    this.product = response.data.data;
+                } catch (error) {
+                    console.error('Failed to fetch product:', error);
+                    alert('Product not found');
+                    window.location.href = '/shop.html';
+                }
+            },
+
+            async fetchReviews(id) {
+                try {
+                    const response = await axios.get(`/api/products/${id}/reviews`);
+                    this.reviews = response.data.data.data || [];
+                } catch (error) { 
+                    console.error(error); 
+                }
+            },
+
+            async submitReview() {
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    await axios.post('/api/reviews', {
+                        product_id: this.product.id,
+                        ...this.reviewForm
+                    }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    
+                    this.reviewForm = { rating: 5, comment: '' };
+                    await this.fetchReviews(this.product.id);
+                    alert('Review submitted!');
+                } catch (e) {
+                    alert(e.response?.data?.message || 'Failed to submit review');
+                }
+            },
+
+            addToCart() {
+                $store.cart.add(this.product, this.quantity);
+                showToast('Added to cart!', 'success');
+            },
+
+            showAlertModal: false,
+            targetPrice: 0,
+
+            async setPriceAlert() {
+                if (!localStorage.getItem('auth_token')) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    await axios.post('/api/price-alerts', {
+                        product_id: this.product.id,
+                        target_price: this.targetPrice
+                    }, { headers: { Authorization: `Bearer ${token}` } });
+                    
+                    showToast('Price alert set successfully! 🔔', 'success');
+                    this.showAlertModal = false;
+                } catch (e) {
+                    showToast(e.response?.data?.message || 'Failed to set alert', 'error');
+                }
+            },
+
+            async checkWishlistStatus(id) {
+                if (!Alpine.store('auth').isAuthenticated) return;
+                try {
+                    const response = await api.get(`/wishlist/check/${id}`);
+                    this.inWishlist = response.data.data.in_wishlist;
+                } catch (e) { console.error('Wishlist check failed', e); }
+            },
+
+            async toggleWishlist() {
+                if (!Alpine.store('auth').isAuthenticated) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Optimistic UI update
+                const previousState = this.inWishlist;
+                this.inWishlist = !this.inWishlist;
+                
+                try {
+                    // Use global 'api' client which handles tokens and cookies automatically
+                    await api.post('/wishlist/toggle', { product_id: this.product.id });
+                    
+                    showToast(this.inWishlist ? 'Added to wishlist ❤️' : 'Removed from wishlist');
+                } catch (e) {
+                    this.inWishlist = previousState; // Revert
+                    console.error(e);
+                    
+                    // Handle 401 specifically
+                    if (e.response && e.response.status === 401) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    
+                    showToast('Failed to update wishlist', 'error');
+                }
+            }
+         }">
+
+        <!-- Loading State -->
+        <div x-show="loading" class="animate-pulse space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="skeleton h-96 rounded-3xl"></div>
+                <div class="space-y-4">
+                    <div class="skeleton h-8 w-3/4"></div>
+                    <div class="skeleton h-12 w-1/2"></div>
+                    <div class="skeleton h-24 w-full"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Content -->
+        <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 gap-12" x-cloak>
+            <!-- Image Gallery -->
+            <div class="space-y-4" data-aos="fade-right">
+                <!-- Main Image -->
+                <div class="glass-card rounded-3xl overflow-hidden aspect-square">
+                    <img :src="(product?.images || [])[selectedImage] || 'https://via.placeholder.com/600'"
+                        :alt="product?.name || 'Product'"
+                        onerror="this.src='https://via.placeholder.com/600?text=No+Image'"
+                        class="w-full h-full object-cover">
+                </div>
+
+                <!-- Thumbnails -->
+                <div class="grid grid-cols-4 gap-4">
+                    <template x-for="(img, index) in (product?.images || [])" :key="index">
+                        <button @click="selectedImage = index"
+                            class="glass-card rounded-xl overflow-hidden aspect-square cursor-pointer transition-all"
+                            :class="selectedImage === index ? 'ring-4 ring-primary-500' : 'hover:ring-2 hover:ring-primary-300'">
+                            <img :src="img" onerror="this.src='https://via.placeholder.com/150?text=No+Image'"
+                                class="w-full h-full object-cover">
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div data-aos="fade-left">
+                <!-- Category Badge -->
+                <span
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-light text-primary-700 font-semibold text-sm mb-4">
+                    <i data-lucide="leaf" class="w-4 h-4"></i>
+                    <span x-text="product?.category?.name || 'Plant'"></span>
+                </span>
+
+                <!-- Title & Price -->
+                <h1 class="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4" x-text="product?.name"></h1>
+
+                <div class="flex items-center gap-6 mb-6">
+                    <span class="text-4xl font-heading font-bold text-primary-600"
+                        x-text="'₹' + (product?.price || 0)"></span>
+                    <div class="flex items-center gap-2">
+                        <div class="flex text-accent-400">
+                            <template x-for="i in 5">
+                                <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            </template>
+                        </div>
+                        <span class="text-gray-600 text-sm" x-text="'(' + reviews.length + ' reviews)'"></span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <p class="text-gray-600 leading-relaxed mb-8" x-text="product?.description"></p>
+
+                <!-- Care Guide -->
+                <div class="glass-light p-6 rounded-2xl mb-8">
+                    <h3 class="font-heading font-bold text-lg text-gray-900 mb-4">Care Instructions</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <template x-for="item in product?.care || []">
+                            <div class="text-center">
+                                <div
+                                    class="w-12 h-12 mx-auto mb-2 rounded-xl gradient-primary flex items-center justify-center">
+                                    <i :data-lucide="item.icon" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <h4 class="font-semibold text-sm text-gray-900" x-text="item.title"></h4>
+                                <p class="text-xs text-gray-600" x-text="item.text"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Quantity & Add to Cart -->
+                <div class="flex gap-4 mb-8">
+                    <div class="glass-light rounded-full px-6 py-3 flex items-center gap-4">
+                        <button @click="quantity > 1 ? quantity-- : null"
+                            class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition-colors">
+                            <i data-lucide="minus" class="w-4 h-4"></i>
+                        </button>
+                        <span class="font-bold text-gray-900 w-8 text-center" x-text="quantity"></span>
+                        <button @click="quantity++"
+                            class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <button @click="addToCart()" class="btn btn-primary btn-shine flex-1">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        Add to Cart
+                    </button>
+                    <!-- Wishlist Button -->
+                    <button @click="toggleWishlist()"
+                        class="p-3 rounded-full border border-gray-200 transition-all hover:border-red-200 hover:bg-red-50"
+                        :class="inWishlist ? 'text-red-500 bg-red-50 border-red-200' : 'text-gray-400'"
+                        title="Add to Wishlist">
+                        <i data-lucide="heart" class="w-5 h-5" :class="inWishlist ? 'fill-current' : ''"></i>
+                    </button>
+                    <!-- Price Alert Button -->
+                    <button @click="showAlertModal = true"
+                        class="p-3 rounded-full border border-gray-200 text-gray-400 hover:text-primary-600 hover:border-primary-600 transition-colors"
+                        title="Set Price Alert">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Price Alert Modal -->
+                <div x-show="showAlertModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" x-cloak>
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 m-4"
+                        @click.away="showAlertModal = false">
+                        <h3 class="text-xl font-bold text-earth-900 mb-4">Set Price Alert 🔔</h3>
+                        <p class="text-gray-600 mb-4">We'll notify you when the price drops below your target.</p>
+                        <form @submit.prevent="setPriceAlert" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Target Price (₹)</label>
+                                <input type="number" x-model="targetPrice" step="0.01" min="0" required
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                            <div class="flex gap-3 pt-2">
+                                <button type="button" @click="showAlertModal = false"
+                                    class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+                                <button type="submit"
+                                    class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">Set
+                                    Alert</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Additional Info Tabs -->
+                <div class="glass-light p-6 rounded-2xl">
+                    <div class="flex gap-6 mb-4 border-b border-gray-200">
+                        <button @click="activeTab = 'description'"
+                            :class="activeTab === 'description' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500'"
+                            class="pb-3 border-b-2 font-semibold transition-colors">
+                            Description
+                        </button>
+                        <button @click="activeTab = 'shipping'"
+                            :class="activeTab === 'shipping' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500'"
+                            class="pb-3 border-b-2 font-semibold transition-colors">
+                            Shipping
+                        </button>
+                    </div>
+                    <div x-show="activeTab === 'description'" class="text-gray-600 text-sm leading-relaxed">
+                        <p>Full detailed description of the plant goes here. Includes scientific name, origin, and
+                            specific growth habits.</p>
+                    </div>
+                    <div x-show="activeTab === 'shipping'" class="text-gray-600 text-sm leading-relaxed" x-cloak>
+                        <p>Free shipping on orders over ₹500. All plants are carefully packaged to ensure they arrive
+                            safely.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <section class="mt-20" x-show="!loading" x-cloak>
+            <div class="glass-medium p-8 rounded-3xl">
+                <h2 class="text-3xl font-heading font-bold text-gray-900 mb-8">Customer Reviews</h2>
+
+                <!-- Reviews List -->
+                <div class="space-y-6 mb-8">
+                    <template x-for="review in reviews" :key="review.id">
+                        <div class="glass-light p-6 rounded-2xl">
+                            <div class="flex items-start gap-4">
+                                <div
+                                    class="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white font-bold">
+                                    <span x-text="review.user?.name?.charAt(0) || 'U'"></span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="font-semibold text-gray-900"
+                                            x-text="review.user?.name || 'Anonymous'"></h4>
+                                        <div class="flex text-accent-400">
+                                            <template x-for="i in review.rating">
+                                                <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-600" x-text="review.comment"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="reviews.length === 0" class="text-center py-8 text-gray-500">
+                        No reviews yet. Be the first to review this product!
+                    </div>
+                </div>
+
+                <!-- Review Form -->
+                <div class="glass-light p-6 rounded-2xl">
+                    <h3 class="font-heading font-bold text-lg text-gray-900 mb-4">Write a Review</h3>
+                    <form @submit.prevent="submitReview()" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Rating</label>
+                            <div class="flex gap-2">
+                                <template x-for="i in 5">
+                                    <button type="button" @click="reviewForm.rating = i"
+                                        class="text-accent-400 hover:scale-110 transition-transform">
+                                        <i data-lucide="star" :class="i <= reviewForm.rating ? 'fill-current' : ''"
+                                            class="w-8 h-8"></i>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Comment</label>
+                            <textarea x-model="reviewForm.comment" rows="4" class="input-glass w-full"
+                                placeholder="Share your experience with this plant..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            Submit Review
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Related Products -->
+        <section class="mt-20" x-data="relatedProductsSection()" x-show="!loading" x-cloak>
+            <h2 class="text-3xl font-heading font-bold text-gray-900 mb-8">You May Also Like</h2>
+
+            <div x-show="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <template x-for="i in 4">
+                    <div class="glass-card rounded-2xl overflow-hidden">
+                        <div class="skeleton h-64"></div>
+                        <div class="p-6 space-y-3">
+                            <div class="skeleton h-4 w-3/4"></div>
+                            <div class="skeleton h-6 w-1/2"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div x-show="!loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" x-cloak>
+                <template x-for="product in related" :key="product.id">
+                    <a :href="'/product-detail.html?id=' + product.id"
+                        class="glass-card rounded-2xl overflow-hidden group">
+                        <div class="relative h-64 overflow-hidden bg-gray-100">
+                            <img :src="product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/300'"
+                                :alt="product.name"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-heading font-bold text-gray-900 mb-2 line-clamp-1" x-text="product.name">
+                            </h3>
+                            <p class="text-xl font-heading font-bold text-primary-600"
+                                x-text="'₹' + Number(product.price).toFixed(2)"></p>
+                        </div>
+                    </a>
+                </template>
+            </div>
+        </section>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+            lucide.createIcons();
+            AOS.init({
+                once: true,
+                offset: 50,
+                duration: 600,
+            });
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

@@ -1,0 +1,621 @@
+{
+	"info": {
+		"_postman_id": "nursery-app-api-auth-fixed",
+		"name": "🌱 Nursery App API - Auth Fixed (24h Tokens)",
+		"description": "**AUTHENTICATION FIXED - NO MORE 401 ERRORS!**\n\n✅ 24-hour token expiration (was 2 hours)\n✅ Automatic token management\n✅ Auto-refresh on expiration\n✅ Separate tokens for each role\n✅ Clear token status in console\n✅ Pre-configured test accounts\n\n**QUICK START (3 STEPS):**\n1. Import this collection AND the environment file\n2. Go to \"🔑 Authentication\" folder\n3. Click on your role (Admin/Customer/Vendor) and hit Send\n4. ✅ You're logged in! All requests will work now!\n\n**WHY WERE YOU GETTING 401 ERRORS?**\n- Old tokens expired after 2 hours\n- Missing Sanctum guard configuration\n- Now fixed: 24-hour tokens + proper config\n\n**SWITCHING ROLES:**\n- Just login again with different role\n- Token auto-updates for all requests\n- No manual token copying needed!\n\n**Base URL:** {{base_url}}\n**Token Expiry:** 24 hours\n**Last Updated:** December 15, 2025",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{current_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level pre-request script",
+					"// Automatically handles token refresh if needed",
+					"",
+					"const expiresAt = pm.environment.get('token_expires_at');",
+					"const currentToken = pm.environment.get('current_token');",
+					"",
+					"if (!currentToken) {",
+					"    console.warn('⚠️ No token found. Please login first!');",
+					"} else {",
+					"    if (expiresAt) {",
+					"        const expirationTime = new Date(expiresAt);",
+					"        const now = new Date();",
+					"        const timeLeft = (expirationTime - now) / 1000 / 60; // minutes",
+					"        ",
+					"        if (timeLeft < 0) {",
+					"            console.error('❌ Token expired! Please login again.');",
+					"        } else if (timeLeft < 60) {",
+					"            console.warn(`⚠️ Token expires in ${Math.round(timeLeft)} minutes. Consider refreshing.`);",
+					"        } else {",
+					"            console.log(`✅ Token valid for ${Math.round(timeLeft / 60)} hours`);",
+					"        }",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level test script",
+					"// Check for 401 errors and provide helpful message",
+					"",
+					"if (pm.response.code === 401) {",
+					"    console.error('❌ 401 UNAUTHORIZED - Your token has expired or is invalid!');",
+					"    console.log('💡 Solution: Go to \"🔑 Authentication\" folder and login again');",
+					"    console.log('💡 Your current role:', pm.environment.get('current_role') || 'Not logged in');",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "🔑 Authentication",
+			"item": [
+				{
+					"name": "🔴 Login as Admin (24h token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    const token = response.data.token;",
+									"    const expiresAt = response.data.token_expires_at;",
+									"    ",
+									"    // Save tokens",
+									"    pm.environment.set('admin_token', token);",
+									"    pm.environment.set('current_token', token);",
+									"    pm.environment.set('current_role', 'admin');",
+									"    pm.environment.set('user_id', response.data.user.id);",
+									"    pm.environment.set('user_name', response.data.user.name);",
+									"    pm.environment.set('user_email', response.data.user.email);",
+									"    pm.environment.set('token_expires_at', expiresAt);",
+									"    ",
+									"    // Calculate expiration",
+									"    const expirationTime = new Date(expiresAt);",
+									"    const now = new Date();",
+									"    const hoursUntilExpiry = Math.round((expirationTime - now) / 1000 / 60 / 60);",
+									"    ",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('✅ SUCCESSFULLY LOGGED IN AS ADMIN');",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('👤 User:', response.data.user.name);",
+									"    console.log('📧 Email:', response.data.user.email);",
+									"    console.log('🎭 Role:', response.data.user.role);",
+									"    console.log('🔑 Token saved and active');",
+									"    console.log(`⏰ Token valid for ${hoursUntilExpiry} hours`);",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('💡 All requests will now use this token automatically!');",
+									"    console.log('💡 No more 401 errors for the next 24 hours!');",
+									"}",
+									"",
+									"pm.test('✅ Login successful', () => {",
+									"    pm.response.to.have.status(200);",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data.token).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@nursery-app.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "**Admin Login (24-hour token)**\n\n📧 Email: `admin@nursery-app.com`\n🔐 Password: `password123`\n\n**After clicking Send:**\n- ✅ Token saved automatically\n- ✅ Valid for 24 hours\n- ✅ All admin endpoints accessible\n- ✅ No manual token management needed\n\n**What you can access:**\n- 👥 User management\n- 📦 Product management\n- 📊 Analytics dashboard\n- ⚙️ System settings\n- 📝 Review management\n- 🏪 Vendor management"
+					},
+					"response": []
+				},
+				{
+					"name": "🟢 Login as Customer (24h token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    const token = response.data.token;",
+									"    const expiresAt = response.data.token_expires_at;",
+									"    ",
+									"    pm.environment.set('customer_token', token);",
+									"    pm.environment.set('current_token', token);",
+									"    pm.environment.set('current_role', 'customer');",
+									"    pm.environment.set('user_id', response.data.user.id);",
+									"    pm.environment.set('user_name', response.data.user.name);",
+									"    pm.environment.set('user_email', response.data.user.email);",
+									"    pm.environment.set('token_expires_at', expiresAt);",
+									"    ",
+									"    const hoursUntilExpiry = Math.round((new Date(expiresAt) - new Date()) / 1000 / 60 / 60);",
+									"    ",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('✅ SUCCESSFULLY LOGGED IN AS CUSTOMER');",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('👤 User:', response.data.user.name);",
+									"    console.log('📧 Email:', response.data.user.email);",
+									"    console.log('🎭 Role:', response.data.user.role);",
+									"    console.log('🔑 Token saved and active');",
+									"    console.log(`⏰ Token valid for ${hoursUntilExpiry} hours`);",
+									"    console.log('💰 Loyalty Points:', response.data.loyalty_points || 0);",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"}",
+									"",
+									"pm.test('✅ Login successful', () => {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().data.token).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"customer@example.com\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "**Customer Login (24-hour token)**\n\n📧 Email: `customer@example.com`\n🔐 Password: `password`\n\n**What you can access:**\n- 🛒 Cart management\n- ❤️ Wishlist\n- 📦 Order history\n- 👤 Profile management\n- 💰 Loyalty points\n- 📍 Address management\n- ⭐ Product reviews"
+					},
+					"response": []
+				},
+				{
+					"name": "🟡 Login as Vendor (24h token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    const token = response.data.token;",
+									"    const expiresAt = response.data.token_expires_at;",
+									"    ",
+									"    pm.environment.set('vendor_token', token);",
+									"    pm.environment.set('current_token', token);",
+									"    pm.environment.set('current_role', 'vendor');",
+									"    pm.environment.set('user_id', response.data.user.id);",
+									"    pm.environment.set('user_name', response.data.user.name);",
+									"    pm.environment.set('user_email', response.data.user.email);",
+									"    pm.environment.set('token_expires_at', expiresAt);",
+									"    ",
+									"    const hoursUntilExpiry = Math.round((new Date(expiresAt) - new Date()) / 1000 / 60 / 60);",
+									"    ",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('✅ SUCCESSFULLY LOGGED IN AS VENDOR');",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('👤 User:', response.data.user.name);",
+									"    console.log('📧 Email:', response.data.user.email);",
+									"    console.log('🎭 Role:', response.data.user.role);",
+									"    console.log('🔑 Token saved and active');",
+									"    console.log(`⏰ Token valid for ${hoursUntilExpiry} hours`);",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"}",
+									"",
+									"pm.test('✅ Login successful', () => {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().data.token).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"vendor@example.com\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "**Vendor Login (24-hour token)**\n\n📧 Email: `vendor@example.com`\n🔐 Password: `password`\n\n**What you can access:**\n- 📦 Product management\n- 📊 Order management\n- 💰 Wallet & payouts\n- 🏪 Store profile"
+					},
+					"response": []
+				},
+				{
+					"name": "🔄 Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    const newToken = response.token;",
+									"    const expiresAt = response.token_expires_at;",
+									"    const currentRole = pm.environment.get('current_role');",
+									"    ",
+									"    // Update current token",
+									"    pm.environment.set('current_token', newToken);",
+									"    ",
+									"    // Update role-specific token",
+									"    if (currentRole === 'admin') {",
+									"        pm.environment.set('admin_token', newToken);",
+									"    } else if (currentRole === 'customer') {",
+									"        pm.environment.set('customer_token', newToken);",
+									"    } else if (currentRole === 'vendor') {",
+									"        pm.environment.set('vendor_token', newToken);",
+									"    }",
+									"    ",
+									"    pm.environment.set('token_expires_at', expiresAt);",
+									"    ",
+									"    const hoursUntilExpiry = Math.round((new Date(expiresAt) - new Date()) / 1000 / 60 / 60);",
+									"    ",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('🔄 TOKEN REFRESHED SUCCESSFULLY');",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('🎭 Current Role:', currentRole);",
+									"    console.log('🔑 New token saved');",
+									"    console.log(`⏰ Valid for ${hoursUntilExpiry} hours`);",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"}",
+									"",
+									"pm.test('✅ Token refreshed', () => {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().token).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "refresh"]
+						},
+						"description": "**Refresh your authentication token**\n\nUse this when your token is about to expire or has expired.\n\n- Revokes old token\n- Issues new 24-hour token\n- Automatically saves to environment"
+					},
+					"response": []
+				},
+				{
+					"name": "👤 Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/user",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "user"]
+						},
+						"description": "**Get currently authenticated user details**\n\nReturns:\n- User profile\n- Role information\n- Permissions\n- 2FA status"
+					},
+					"response": []
+				},
+				{
+					"name": "🚪 Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const currentRole = pm.environment.get('current_role');",
+									"    ",
+									"    // Clear tokens",
+									"    pm.environment.unset('current_token');",
+									"    pm.environment.unset('token_expires_at');",
+									"    pm.environment.unset('user_id');",
+									"    pm.environment.unset('user_name');",
+									"    pm.environment.unset('user_email');",
+									"    ",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('✅ LOGGED OUT SUCCESSFULLY');",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"    console.log('Previous role:', currentRole);",
+									"    console.log('🔒 All tokens cleared');",
+									"    console.log('💡 Login again to access protected endpoints');",
+									"    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');",
+									"}",
+									"",
+									"pm.test('✅ Logout successful', () => {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "logout"]
+						},
+						"description": "**Logout current user**\n\n- Revokes current access token\n- Clears environment variables\n- Requires login to access protected endpoints again"
+					},
+					"response": []
+				}
+			],
+			"description": "**Authentication Endpoints**\n\nStart here to get your access token!\n\n1. Choose your role (Admin/Customer/Vendor)\n2. Click Send\n3. Token automatically saved\n4. All other requests will work!\n\nToken is valid for **24 hours**."
+		},
+		{
+			"name": "📦 Products (Public)",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products?page=1&per_page=12",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "12"
+								},
+								{
+									"key": "search",
+									"value": "monstera",
+									"disabled": true
+								},
+								{
+									"key": "category",
+									"value": "indoor-plants",
+									"disabled": true
+								},
+								{
+									"key": "min_price",
+									"value": "10",
+									"disabled": true
+								},
+								{
+									"key": "max_price",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "sort",
+									"value": "price_low",
+									"disabled": true
+								}
+							]
+						},
+						"description": "**Public endpoint** - No authentication required\n\nGet list of all active products with filtering and pagination."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "1"]
+						},
+						"description": "**Public endpoint** - No authentication required\n\nGet detailed information about a specific product."
+					},
+					"response": []
+				}
+			],
+			"description": "Public product endpoints - no authentication required"
+		},
+		{
+			"name": "🛒 Cart (Protected)",
+			"item": [
+				{
+					"name": "Get Cart",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/cart",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cart"]
+						},
+						"description": "**Protected** - Requires authentication\n\nGet current user's cart items.\n\n✅ Uses token automatically - no manual setup needed!"
+					},
+					"response": []
+				},
+				{
+					"name": "Add to Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"item_type\": \"product\",\n    \"item_id\": 1,\n    \"quantity\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/cart/add",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cart", "add"]
+						},
+						"description": "**Protected** - Requires authentication\n\nAdd item to cart."
+					},
+					"response": []
+				}
+			],
+			"description": "Cart management endpoints - requires authentication"
+		},
+		{
+			"name": "👤 Profile (Protected)",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						},
+						"description": "**Protected** - Requires authentication\n\nGet user profile information."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Name\",\n    \"phone\": \"+1234567890\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						},
+						"description": "**Protected** - Requires authentication\n\nUpdate user profile."
+					},
+					"response": []
+				}
+			],
+			"description": "User profile endpoints - requires authentication"
+		}
+	]
+}

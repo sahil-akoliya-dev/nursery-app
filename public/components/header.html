@@ -1,0 +1,126 @@
+<nav class="fixed w-full z-50 transition-all duration-300 glass" id="navbar" x-data="{ mobileMenuOpen: false }">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+            <!-- Logo -->
+            <div class="flex-shrink-0 flex items-center">
+                <a href="/" class="flex items-center gap-2 group">
+                    <div
+                        class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white group-hover:bg-primary-700 transition-colors">
+                        <i data-lucide="leaf" class="w-6 h-6"></i>
+                    </div>
+                    <span class="font-display font-bold text-2xl text-primary-900">Nursery<span
+                            class="text-primary-600">App</span></span>
+                </a>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="/" class="font-medium transition-colors"
+                    :class="window.location.pathname === '/' || window.location.pathname === '/index.html' ? 'text-primary-900' : 'text-earth-800 hover:text-primary-600'">Home</a>
+                <a href="/shop" class="font-medium transition-colors"
+                    :class="window.location.pathname.startsWith('/shop') ? 'text-primary-600' : 'text-earth-800 hover:text-primary-600'">Shop</a>
+                <a href="/plant-finder" class="font-medium transition-colors"
+                    :class="window.location.pathname.startsWith('/plant-finder') ? 'text-primary-600' : 'text-earth-800 hover:text-primary-600'">Plant
+                    Finder</a>
+                <a href="/about" class="font-medium transition-colors"
+                    :class="window.location.pathname.startsWith('/about') ? 'text-primary-600' : 'text-earth-800 hover:text-primary-600'">About</a>
+                <a href="/blog" class="font-medium transition-colors"
+                    :class="window.location.pathname.startsWith('/blog') ? 'text-primary-600' : 'text-earth-800 hover:text-primary-600'">Blog</a>
+                <a href="/community.html" class="font-medium transition-colors"
+                    :class="window.location.pathname.startsWith('/community') ? 'text-primary-600' : 'text-earth-800 hover:text-primary-600'">Community</a>
+            </div>
+
+            <!-- Right Icons -->
+            <div class="hidden md:flex items-center space-x-6">
+                <!-- Search -->
+                <button class="text-earth-800 hover:text-primary-600 transition-colors">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+
+
+
+                <!-- Cart -->
+                <a href="/cart" class="relative text-earth-800 hover:text-primary-600 transition-colors group" x-data>
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span
+                        class="absolute -top-2 -right-2 bg-primary-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
+                        x-text="$store.cart.count" x-show="$store.cart.count > 0" x-cloak>0</span>
+                </a>
+
+                <!-- Auth -->
+                <template x-if="$store.auth.isAuthenticated">
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" @click.away="open = false"
+                            class="flex items-center gap-2 text-earth-800 hover:text-primary-600">
+                            <template x-if="$store.auth.user.avatar">
+                                <img :src="$store.auth.user.avatar"
+                                    class="w-8 h-8 rounded-full object-cover border border-gray-200" alt="User Avatar">
+                            </template>
+                            <template x-if="!$store.auth.user.avatar">
+                                <div
+                                    class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold">
+                                    <span x-text="$store.auth.user.name.charAt(0)">U</span>
+                                </div>
+                            </template>
+                        </button>
+                        <!-- Dropdown -->
+                        <div x-show="open" x-transition
+                            class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 border border-gray-100">
+                            <a href="/profile"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50">Profile</a>
+
+                            <!-- Admin Dashboard Link -->
+                            <template x-if="$store.auth.isAdmin()">
+                                <a href="/admin-dashboard.html"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50">Admin
+                                    Dashboard</a>
+                            </template>
+
+                            <!-- Vendor Dashboard Link -->
+                            <template x-if="$store.auth.isVendor()">
+                                <a href="/vendor-dashboard.html"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50">Vendor
+                                    Dashboard</a>
+                            </template>
+
+                            <button @click="$store.auth.logout()"
+                                class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="!$store.auth.isAuthenticated">
+                    <a href="/login" class="text-sm font-medium text-primary-600 hover:text-primary-700">Login</a>
+                </template>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden flex items-center">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-earth-800">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div x-show="mobileMenuOpen" x-transition class="md:hidden bg-white border-t border-gray-100 absolute w-full">
+        <div class="px-4 pt-2 pb-4 space-y-1">
+            <a href="/" class="block px-3 py-2 text-base font-medium rounded-md"
+                :class="window.location.pathname === '/' ? 'text-primary-900 bg-primary-50' : 'text-earth-800 hover:bg-gray-50'">Home</a>
+            <a href="/shop" class="block px-3 py-2 text-base font-medium rounded-md"
+                :class="window.location.pathname.startsWith('/shop') ? 'text-primary-900 bg-primary-50' : 'text-earth-800 hover:bg-gray-50'">Shop</a>
+            <a href="/plant-finder" class="block px-3 py-2 text-base font-medium rounded-md"
+                :class="window.location.pathname.startsWith('/plant-finder') ? 'text-primary-900 bg-primary-50' : 'text-earth-800 hover:bg-gray-50'">Plant
+                Finder</a>
+            <a href="/about" class="block px-3 py-2 text-base font-medium rounded-md"
+                :class="window.location.pathname.startsWith('/about') ? 'text-primary-900 bg-primary-50' : 'text-earth-800 hover:bg-gray-50'">About</a>
+            <a href="/blog" class="block px-3 py-2 text-base font-medium rounded-md"
+                :class="window.location.pathname.startsWith('/blog') ? 'text-primary-900 bg-primary-50' : 'text-earth-800 hover:bg-gray-50'">Blog</a>
+            <a href="/community.html" class="block px-3 py-2 text-base font-medium rounded-md"
+                :class="window.location.pathname.startsWith('/community') ? 'text-primary-900 bg-primary-50' : 'text-earth-800 hover:bg-gray-50'">Community</a>
+            <a href="/cart"
+                class="block px-3 py-2 text-base font-medium text-earth-800 hover:bg-gray-50 rounded-md">Cart (<span
+                    x-text="$store.cart.count">0</span>)</a>
+        </div>
+    </div>
+</nav>

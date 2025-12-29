@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Success - Nursery App</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased">
+
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <div class="relative overflow-hidden min-h-screen flex items-center justify-center py-20">
+        <!-- Background Blobs -->
+        <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+            <div
+                class="blob bg-primary-200 w-96 h-96 rounded-full absolute top-0 left-0 blur-3xl opacity-50 animate-blob">
+            </div>
+            <div
+                class="blob bg-secondary-200 w-96 h-96 rounded-full absolute bottom-0 right-0 blur-3xl opacity-50 animate-blob animation-delay-2000">
+            </div>
+            <div
+                class="blob bg-accent-200 w-80 h-80 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-50 animate-blob animation-delay-4000">
+            </div>
+        </div>
+
+        <div class="glass-card max-w-lg w-full p-10 text-center mx-4">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="check" class="w-10 h-10 text-green-600"></i>
+            </div>
+
+            <h1 class="font-display font-bold text-3xl text-earth-900 mb-4">Order Placed Successfully!</h1>
+            <p class="text-gray-600 mb-8 leading-relaxed">
+                Thank you for your purchase. Your order has been received and is being processed. You will receive an
+                email
+                confirmation shortly.
+            </p>
+
+            <div class="space-y-4">
+                <a href="/shop"
+                    class="block w-full bg-primary-600 text-white px-8 py-3 rounded-full font-bold hover:bg-primary-700 transition-colors btn-shine">
+                    Continue Shopping
+                </a>
+                <a href="/profile"
+                    class="block w-full text-primary-600 font-medium hover:text-primary-700 transition-colors">
+                    View Order History
+                </a>
+            </div>
+        </div>
+
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+        <script src="/assets/js/app.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', async () => {
+                await window.loadComponents();
+                lucide.createIcons();
+                AOS.init();
+            });
+        </script>
+        <div id="toast-placeholder"></div>
+</body>
+
+</html>

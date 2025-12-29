@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Store - Nursery App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased" x-data="vendorStore()">
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="/" class="flex items-center gap-2 group">
+                        <div
+                            class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white group-hover:bg-primary-700 transition-colors">
+                            <i data-lucide="leaf" class="w-6 h-6"></i>
+                        </div>
+                        <span class="font-display font-bold text-2xl text-primary-900">Nursery<span
+                                class="text-primary-600">App</span></span>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-earth-800 font-medium hover:text-primary-600 transition-colors">Home</a>
+                    <a href="/shop" class="text-earth-800 font-medium hover:text-primary-600 transition-colors">Shop</a>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/cart" class="relative text-earth-800 hover:text-primary-600 transition-colors group">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span
+                            class="absolute -top-2 -right-2 bg-primary-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
+                            x-text="$store.cart.count" x-show="$store.cart.count > 0" x-cloak>0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-32 pb-16">
+        <!-- Vendor Header -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+            <div class="bg-white rounded-2xl shadow-sm p-8 flex flex-col md:flex-row items-center gap-8">
+                <div
+                    class="w-32 h-32 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 text-4xl font-bold flex-shrink-0">
+                    <span x-text="vendor.store_name ? vendor.store_name.charAt(0) : 'V'"></span>
+                </div>
+                <div class="text-center md:text-left flex-1">
+                    <h1 class="text-3xl md:text-4xl font-display font-bold text-earth-900 mb-2"
+                        x-text="vendor.store_name"></h1>
+                    <p class="text-gray-600 text-lg mb-4" x-text="vendor.description"></p>
+                    <div class="flex items-center justify-center md:justify-start gap-4 text-sm text-gray-500">
+                        <span class="flex items-center gap-1"><i data-lucide="check-circle"
+                                class="w-4 h-4 text-green-500"></i> Verified Seller</span>
+                        <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-4 h-4"></i> Joined
+                            <span x-text="new Date(vendor.created_at).getFullYear()"></span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold text-earth-900 mb-8">Latest Products</h2>
+
+            <div x-show="loading" class="text-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            </div>
+
+            <div x-show="!loading && products.length === 0" class="text-center py-12">
+                <p class="text-gray-500">This vendor hasn't added any products yet.</p>
+            </div>
+
+            <div x-show="!loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <template x-for="product in products" :key="product.id">
+                    <div
+                        class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group hover-lift">
+                        <div class="relative h-72 overflow-hidden bg-gray-100">
+                            <img :src="product.formatted_images[0]" :alt="product.name"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <button @click="$store.cart.add(product)"
+                                class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-primary-600 hover:bg-primary-600 hover:text-white transition-all transform translate-y-12 group-hover:translate-y-0">
+                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-lg font-bold text-earth-900 mb-2" x-text="product.name"></h3>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xl font-display font-bold text-earth-900"
+                                    x-text="'₹' + product.price"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('vendorStore', () => ({
+                vendor: {},
+                products: [],
+                loading: true,
+
+                async init() {
+                    // Get slug from URL query param for now (since we don't have real routing)
+                    // In a real app, this would be /store/slug
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const slug = urlParams.get('slug');
+
+                    if (!slug) {
+                        alert('Store not found');
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    await this.fetchVendor(slug);
+                    await this.fetchProducts(slug);
+                    this.loading = false;
+                    lucide.createIcons();
+                },
+
+                async fetchVendor(slug) {
+                    try {
+                        const res = await axios.get(`/api/stores/${slug}`);
+                        this.vendor = res.data.data;
+                    } catch (e) {
+                        console.error(e);
+                        alert('Store not found');
+                    }
+                },
+
+                async fetchProducts(slug) {
+                    try {
+                        const res = await axios.get(`/api/stores/${slug}/products`);
+                        this.products = res.data.data.data;
+                    } catch (e) { console.error(e); }
+                }
+            }));
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

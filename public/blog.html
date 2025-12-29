@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Nursery App</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/design-system.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased">
+
+    <div id="header-placeholder"></div>
+
+    <!-- Blog Header -->
+    <div class="relative pt-32 pb-12 bg-earth-100 overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+            <div
+                class="blob bg-primary-200 w-96 h-96 rounded-full absolute top-0 right-0 blur-3xl opacity-50 animate-blob">
+            </div>
+            <div
+                class="blob bg-secondary-200 w-80 h-80 rounded-full absolute bottom-0 left-0 blur-3xl opacity-50 animate-blob animation-delay-2000">
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-display font-bold text-earth-900 mb-4">Our Blog</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Tips, tricks, and inspiration for your indoor garden.</p>
+        </div>
+    </div>
+
+    <!-- Blog Grid -->
+    <div class="pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ 
+            posts: [], 
+            loading: true,
+            
+            async init() {
+                try {
+                    const response = await axios.get('/api/posts');
+                    this.posts = response.data.data;
+                } catch (error) {
+                    console.error('Failed to fetch posts:', error);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }">
+
+        <!-- Loading State -->
+        <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <template x-for="i in 6">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                    <div class="h-64 bg-gray-200"></div>
+                    <div class="p-6 space-y-3">
+                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div class="h-20 bg-gray-200 rounded w-full"></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Posts Grid -->
+        <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" x-cloak>
+            <template x-for="post in posts" :key="post.id">
+                <div
+                    class="glass-card bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full">
+                    <a :href="'/blog-detail?slug=' + post.slug" class="block relative h-64 overflow-hidden bg-gray-100">
+                        <img :src="post.image" :alt="post.title"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div
+                            class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary-700 uppercase tracking-wider">
+                            Article
+                        </div>
+                    </a>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span x-text="new Date(post.published_at).toLocaleDateString()"></span>
+                            <span class="mx-1">•</span>
+                            <span x-text="post.user.name"></span>
+                        </div>
+                        <a :href="'/blog-detail?slug=' + post.slug" class="block mb-3">
+                            <h3 class="text-xl font-display font-bold text-earth-900 group-hover:text-primary-700 transition-colors line-clamp-2"
+                                x-text="post.title"></h3>
+                        </a>
+                        <p class="text-gray-600 mb-6 line-clamp-3 flex-1" x-text="post.excerpt"></p>
+                        <a :href="'/blog-detail?slug=' + post.slug"
+                            class="inline-flex items-center text-primary-600 font-bold hover:text-primary-700 transition-colors">
+                            Read Article <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+            lucide.createIcons();
+            AOS.init();
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

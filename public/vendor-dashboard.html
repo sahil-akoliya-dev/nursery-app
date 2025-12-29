@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard - Nursery App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-900 antialiased" x-data="vendorDashboard()">
+
+    <!-- Sidebar -->
+    <aside
+        class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-30 transition-transform duration-300 transform lg:translate-x-0"
+        :class="{'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen}">
+        <div class="h-20 flex items-center justify-center border-b border-gray-100">
+            <a href="/" class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                </div>
+                <span class="font-display font-bold text-xl text-primary-900">Vendor<span
+                        class="text-primary-600">Portal</span></span>
+            </a>
+        </div>
+
+        <nav class="p-4 space-y-1">
+            <button @click="activeTab = 'products'"
+                :class="{'bg-primary-50 text-primary-600': activeTab === 'products', 'text-gray-600 hover:bg-gray-50': activeTab !== 'products'}"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                <i data-lucide="package" class="w-5 h-5"></i> Products
+            </button>
+            <button @click="activeTab = 'orders'"
+                :class="{'bg-primary-50 text-primary-600': activeTab === 'orders', 'text-gray-600 hover:bg-gray-50': activeTab !== 'orders'}"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i> Orders
+            </button>
+            <button @click="activeTab = 'profile'"
+                :class="{'bg-primary-50 text-primary-600': activeTab === 'profile', 'text-gray-600 hover:bg-gray-50': activeTab !== 'profile'}"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                <i data-lucide="user" class="w-5 h-5"></i> Profile
+            </button>
+            <button @click="activeTab = 'wallet'"
+                :class="{'bg-primary-50 text-primary-600': activeTab === 'wallet', 'text-gray-600 hover:bg-gray-50': activeTab !== 'wallet'}"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors">
+                <i data-lucide="wallet" class="w-5 h-5"></i> Wallet
+            </button>
+        </nav>
+
+        <div class="absolute bottom-0 w-full p-4 border-t border-gray-100">
+            <button @click="logout"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 font-medium transition-colors">
+                <i data-lucide="log-out" class="w-5 h-5"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-20">
+            <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-500">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <h1 class="text-xl font-bold text-gray-800" x-text="pageTitle"></h1>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 font-bold">
+                        <span x-text="vendorName.charAt(0)">V</span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700" x-text="vendorName"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="flex-1 p-8 overflow-y-auto">
+
+            <!-- Products Tab -->
+            <div x-show="activeTab === 'products'" class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold">My Products</h2>
+                    <button @click="openProductModal()"
+                        class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add Product
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 font-medium text-gray-500">Product</th>
+                                <th class="px-6 py-4 font-medium text-gray-500">Price</th>
+                                <th class="px-6 py-4 font-medium text-gray-500">Stock</th>
+                                <th class="px-6 py-4 font-medium text-gray-500">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <template x-for="product in products" :key="product.id">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img :src="product.formatted_images[0]"
+                                                class="w-10 h-10 rounded-lg object-cover bg-gray-100">
+                                            <span class="font-medium text-gray-900" x-text="product.name"></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600" x-text="'$' + product.price"></td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            :class="product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                                            class="px-2 py-1 rounded-full text-xs font-medium"
+                                            x-text="product.stock_quantity + ' in stock'"></span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex gap-2">
+                                            <button @click="editProduct(product)"
+                                                class="p-1 text-blue-600 hover:bg-blue-50 rounded"><i
+                                                    data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                            <button @click="deleteProduct(product.id)"
+                                                class="p-1 text-red-600 hover:bg-red-50 rounded"><i
+                                                    data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div x-show="products.length === 0" class="p-8 text-center text-gray-500">
+                        No products found. Start selling by adding a product!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div x-show="activeTab === 'orders'" class="space-y-6">
+                <h2 class="text-lg font-semibold">Orders</h2>
+                <div class="space-y-4">
+                    <template x-for="order in orders" :key="order.id">
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                            <div class="flex justify-between items-start mb-4 border-b border-gray-100 pb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-900" x-text="order.order_number"></h3>
+                                    <p class="text-sm text-gray-500"
+                                        x-text="new Date(order.created_at).toLocaleDateString()"></p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                    x-text="order.status"></span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <template x-for="item in order.order_items" :key="item.id">
+                                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                        <div class="flex items-center gap-3">
+                                            <img :src="item.item.formatted_images[0]"
+                                                class="w-12 h-12 rounded-lg object-cover">
+                                            <div>
+                                                <p class="font-medium text-gray-900" x-text="item.item.name"></p>
+                                                <p class="text-sm text-gray-500">Qty: <span
+                                                        x-text="item.quantity"></span></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <span class="font-medium" x-text="'₹' + item.price"></span>
+                                            <select @change="updateItemStatus(order.id, item.id, $event.target.value)"
+                                                class="text-sm border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+                                                :value="item.status">
+                                                <option value="pending">Pending</option>
+                                                <option value="shipped">Shipped</option>
+                                                <option value="delivered">Delivered</option>
+                                                <option value="cancelled">Cancelled</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="orders.length === 0"
+                        class="p-8 text-center text-gray-500 bg-white rounded-xl border border-gray-200">
+                        No orders yet.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div x-show="activeTab === 'profile'">
+                <h2 class="text-lg font-semibold mb-6">Vendor Profile</h2>
+                <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-200 max-w-2xl">
+                    <form @submit.prevent="updateProfile" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                            <input type="text" x-model="profile.store_name"
+                                class="w-full px-4 py-2 border border-gray-200 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea x-model="profile.description" rows="4"
+                                class="w-full px-4 py-2 border border-gray-200 rounded-lg"></textarea>
+                        </div>
+                        <button type="submit"
+                            class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Wallet Tab -->
+            <div x-show="activeTab === 'wallet'" class="space-y-6">
+                <h2 class="text-lg font-semibold">My Wallet</h2>
+
+                <!-- Balance Card -->
+                <div
+                    class="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 text-white shadow-lg max-w-md">
+                    <p class="text-primary-100 text-sm font-medium mb-1">Available Balance</p>
+                    <h3 class="text-4xl font-bold mb-6" x-text="'₹' + (wallet.balance || '0.00')"></h3>
+                    <button @click="requestPayout"
+                        class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i> Request Payout
+                    </button>
+                </div>
+
+                <!-- Transactions -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Recent Transactions</h3>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-4 font-medium text-gray-500">Date</th>
+                                    <th class="px-6 py-4 font-medium text-gray-500">Description</th>
+                                    <th class="px-6 py-4 font-medium text-gray-500">Type</th>
+                                    <th class="px-6 py-4 font-medium text-gray-500">Amount</th>
+                                    <th class="px-6 py-4 font-medium text-gray-500">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <template x-for="txn in wallet.transactions?.data" :key="txn.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 text-gray-600"
+                                            x-text="new Date(txn.created_at).toLocaleDateString()"></td>
+                                        <td class="px-6 py-4 text-gray-900" x-text="txn.description"></td>
+                                        <td class="px-6 py-4">
+                                            <span class="capitalize" x-text="txn.type"></span>
+                                        </td>
+                                        <td class="px-6 py-4 font-medium"
+                                            :class="txn.amount >= 0 ? 'text-green-600' : 'text-red-600'"
+                                            x-text="(txn.amount >= 0 ? '+' : '') + '₹' + txn.amount"></td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium capitalize" :class="{
+                                                    'bg-yellow-100 text-yellow-800': txn.status === 'pending',
+                                                    'bg-green-100 text-green-800': txn.status === 'completed',
+                                                    'bg-red-100 text-red-800': txn.status === 'failed'
+                                                }" x-text="txn.status">
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        <div x-show="!wallet.transactions?.data?.length" class="p-8 text-center text-gray-500">
+                            No transactions yet.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Product Modal -->
+    <div x-show="showProductModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" x-cloak>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900" x-text="isEditing ? 'Edit Product' : 'Add New Product'">
+                </h3>
+                <button @click="showProductModal = false" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+            <form @submit.prevent="saveProduct" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                    <input type="text" x-model="productForm.name" required
+                        class="w-full px-4 py-2 border border-gray-200 rounded-lg">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                        <input type="number" step="0.01" x-model="productForm.price" required
+                            class="w-full px-4 py-2 border border-gray-200 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                        <input type="number" x-model="productForm.stock_quantity" required
+                            class="w-full px-4 py-2 border border-gray-200 rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select x-model="productForm.category_id"
+                        class="w-full px-4 py-2 border border-gray-200 rounded-lg">
+                        <option value="1">Indoor</option>
+                        <option value="2">Outdoor</option>
+                        <option value="3">Succulent</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea x-model="productForm.description" rows="3"
+                        class="w-full px-4 py-2 border border-gray-200 rounded-lg"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" @click="showProductModal = false"
+                        class="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Save
+                        Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('vendorDashboard', () => ({
+                sidebarOpen: false,
+                activeTab: 'products',
+                vendorName: 'Vendor',
+                products: [],
+                orders: [],
+                profile: {},
+                wallet: {},
+                showProductModal: false,
+                isEditing: false,
+                productForm: { name: '', price: '', stock_quantity: '', category_id: 1, description: '' },
+                loading: false,
+
+                get pageTitle() {
+                    return this.activeTab.charAt(0).toUpperCase() + this.activeTab.slice(1);
+                },
+
+                async init() {
+                    // Check if user is authenticated
+                    if (!Alpine.store('auth').isAuthenticated) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+
+                    // Check if user has vendor role
+                    if (!Alpine.store('auth').isVendor()) {
+                        alert('Access Denied: You do not have vendor privileges.');
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    // Check vendor status (approved, pending, rejected)
+                    const vendor = Alpine.store('auth').user?.vendor;
+                    if (!vendor) {
+                        alert('Vendor profile not found. Please register as a vendor.');
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    if (vendor.status === 'pending') {
+                        window.location.href = '/vendor-pending.html';
+                        return;
+                    }
+
+                    if (vendor.status !== 'approved') {
+                        alert(`Your vendor account is ${vendor.status}. Please contact support.`);
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    this.loading = true;
+                    try {
+                        await Promise.all([
+                            this.fetchProfile(),
+                            this.fetchProducts(),
+                            this.fetchOrders(),
+                            this.fetchWallet()
+                        ]);
+                    } catch (error) {
+                        console.error('Initialization error:', error);
+                    } finally {
+                        this.loading = false;
+                        lucide.createIcons();
+                    }
+                },
+
+                async fetchProfile() {
+                    try {
+                        const res = await api.get('/vendor/profile');
+                        this.profile = res.data.data;
+                        this.vendorName = this.profile.store_name;
+                    } catch (e) {
+                        console.error('Fetch profile failed', e);
+                        // If 403/401, maybe redirect or show error
+                    }
+                },
+
+                async fetchProducts() {
+                    try {
+                        const res = await api.get('/vendor/products');
+                        this.products = res.data.data;
+                    } catch (e) { console.error('Fetch products failed', e); }
+                },
+
+                async fetchOrders() {
+                    try {
+                        const res = await api.get('/vendor/orders');
+                        this.orders = res.data.data;
+                    } catch (e) { console.error('Fetch orders failed', e); }
+                },
+
+                async fetchWallet() {
+                    try {
+                        const res = await api.get('/vendor/wallet');
+                        this.wallet = res.data.data;
+                    } catch (e) { console.error('Fetch wallet failed', e); }
+                },
+
+                async requestPayout() {
+                    if (!confirm('Request payout for current balance?')) return;
+                    try {
+                        await api.post('/vendor/wallet/payout');
+                        showToast('Payout requested successfully!', 'success');
+                        this.fetchWallet();
+                    } catch (e) {
+                        showToast(e.response?.data?.message || 'Failed to request payout', 'error');
+                    }
+                },
+
+                openProductModal() {
+                    this.isEditing = false;
+                    this.productForm = { name: '', price: '', stock_quantity: '', category_id: 1, description: '' };
+                    this.showProductModal = true;
+                },
+
+                editProduct(product) {
+                    this.isEditing = true;
+                    this.productForm = { ...product };
+                    this.showProductModal = true;
+                },
+
+                async saveProduct() {
+                    try {
+                        if (this.isEditing) {
+                            await api.put(`/vendor/products/${this.productForm.id}`, this.productForm);
+                            showToast('Product updated successfully', 'success');
+                        } else {
+                            await api.post('/vendor/products', this.productForm);
+                            showToast('Product created successfully', 'success');
+                        }
+
+                        this.showProductModal = false;
+                        await this.fetchProducts();
+                    } catch (e) {
+                        showToast(e.response?.data?.message || 'Failed to save product', 'error');
+                    }
+                },
+
+                async deleteProduct(id) {
+                    if (!confirm('Are you sure you want to delete this product?')) return;
+                    try {
+                        await api.delete(`/vendor/products/${id}`);
+                        showToast('Product deleted successfully', 'success');
+                        await this.fetchProducts();
+                    } catch (e) {
+                        showToast(e.response?.data?.message || 'Failed to delete product', 'error');
+                    }
+                },
+
+                async updateItemStatus(orderId, itemId, status) {
+                    try {
+                        await api.put(`/vendor/orders/${orderId}/items/${itemId}/status`, { status });
+                        showToast('Order status updated', 'success');
+                        await this.fetchOrders(); // Refresh to see changes
+                    } catch (e) {
+                        showToast(e.response?.data?.message || 'Failed to update status', 'error');
+                    }
+                },
+
+                async updateProfile() {
+                    try {
+                        await api.put('/vendor/profile', this.profile);
+                        showToast('Profile updated successfully', 'success');
+                        this.vendorName = this.profile.store_name;
+                    } catch (e) {
+                        showToast(e.response?.data?.message || 'Failed to update profile', 'error');
+                    }
+                },
+
+                logout() {
+                    Alpine.store('auth').logout();
+                }
+            }));
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+        });
+    </script>
+</body>
+
+</html>

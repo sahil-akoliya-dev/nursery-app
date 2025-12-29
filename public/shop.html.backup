@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop - Nursery App</title>
+
+    <!-- Tailwind CSS with Custom Config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        },
+                        accent: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    },
+                    fontFamily: {
+                        heading: ['Outfit', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="/assets/css/design-system.css">
+
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</head>
+
+<body class="font-body antialiased bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div id="header-placeholder"></div>
+
+    <!-- Hero Header -->
+    <section class="relative pt-32 pb-16 overflow-hidden">
+        <!-- Animated Background -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute top-0 right-0 w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float">
+            </div>
+            <div class="absolute bottom-0 left-0 w-96 h-96 bg-accent-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"
+                style="animation-delay: 2s;"></div>
+        </div>
+
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8" data-aos="fade-up">
+                <span class="text-primary-600 font-semibold text-sm uppercase tracking-wider mb-2 block">Discover</span>
+                <h1 class="text-5xl md:text-6xl font-heading font-bold text-gray-900 mb-4">
+                    Shop <span class="text-gradient">Plants</span>
+                </h1>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Find the perfect green companion for your space
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shop Page with Sidebar Layout -->\n <div class=\"pt-32 pb-20\" x-data=\"{ \n products: [], \n categories: [],\n
+        selectedCategory: null,\n priceRange: 200,\n searchQuery: '' ,\n sortBy: 'featured' ,\n loading: true,\n
+        viewMode: 'grid' ,\n showMobileFilters: false,\n \n async init() {\n await this.fetchCategories();\n await
+        this.fetchProducts();\n this.$watch('selectedCategory', ()=> this.fetchProducts());\n this.$watch('priceRange',
+        () => this.fetchProducts());\n this.$watch('searchQuery', () => this.debounceSearch());\n this.$watch('sortBy',
+        () => this.sortProducts());\n },\n\n debounceSearch() {\n clearTimeout(this.searchTimeout);\n this.searchTimeout
+        = setTimeout(() => this.fetchProducts(), 300);\n },\n\n async fetchCategories() {\n try {\n const response =
+        await axios.get('/api/categories');\n this.categories = [{id: null, name: 'All Categories'},
+        ...response.data.data];\n } catch (error) {\n console.error('Failed to fetch categories:', error);\n }\n },\n\n
+        async fetchProducts() {\n this.loading = true;\n try {\n const params = {\n max_price: this.priceRange,\n
+        search: this.searchQuery\n };\n \n if (this.selectedCategory) {\n params.category = this.selectedCategory;\n
+        }\n\n const response = await axios.get('/api/products', { params });\n this.products = response.data.data;\n
+        this.sortProducts();\n } catch (error) {\n console.error('Failed to fetch products:', error);\n } finally {\n
+        this.loading = false;\n }\n },\n\n sortProducts() {\n if (this.sortBy === 'price-low') {\n
+        this.products.sort((a, b) => a.price - b.price);\n } else if (this.sortBy === 'price-high') {\n
+        this.products.sort((a, b) => b.price - a.price);\n } else if (this.sortBy === 'name') {\n this.products.sort((a,
+        b) => a.name.localeCompare(b.name));\n }\n },\n\n clearFilters() {\n this.selectedCategory = null;\n
+        this.priceRange = 200;\n this.searchQuery = '';\n this.sortBy = 'featured';\n }\n }\">\n\n <div
+            class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n <!-- Top Bar -->\n <div class=\"flex justify-between
+                items-center mb-8\" data-aos=\"fade-down\">\n <!-- Results Count -->\n <div>\n <h1 class=\"text-3xl
+                        font-display font-bold text-gray-900 mb-1\">Shop Plants</h1>\n <p class=\"text-gray-600\"
+                        x-show=\"!loading\">\n <span x-text=\"products.length\"></span> <span
+                            x-text=\"products.length===1 ? 'product' : 'products' \"></span> found\n </p>\n <p
+                        class=\"text-gray-600\" x-show=\"loading\">Loading...</p>\n </div>\n\n
+                <!-- View Toggle (Desktop) -->\n <div class=\"hidden md:flex items-center gap-2 bg-white rounded-lg p-1
+                    shadow-sm\">\n <button @click=\"viewMode='grid' \"\n :class=\"viewMode==='grid'
+                        ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100' \"\n class=\"px-4 py-2 rounded-md
+                        transition-all duration-200 font-medium text-sm\">\n <i data-lucide=\"grid-3x3\" class=\"w-4 h-4
+                            inline mr-1.5\"></i>\n Grid\n </button>\n <button @click=\"viewMode='list' \"\n
+                        :class=\"viewMode==='list' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100' \"\n
+                        class=\"px-4 py-2 rounded-md transition-all duration-200 font-medium text-sm\">\n <i
+                            data-lucide=\"list\" class=\"w-4 h-4 inline mr-1.5\"></i>\n List\n </button>\n </div>\n
+            </div>\n\n <!-- Main Layout: Sidebar + Products -->\n <div class=\"flex gap-8\">\n
+                <!-- Sidebar Filters (Desktop) -->\n <aside class=\"hidden lg:block w-80 flex-shrink-0\">\n <div
+                        class=\"glass-light p-6 rounded-2xl sticky top-24 space-y-6\">\n <!-- Search -->\n <div>\n
+                            <label class=\"block text-sm font-semibold text-gray-900 mb-3\">Search</label>\n <div
+                                class=\"relative\">\n <input type=\"text\" x-model=\"searchQuery\" placeholder=\"Search
+                                    plants...\"\n class=\"w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200
+                                    focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all\">\n <i
+                                    data-lucide=\"search\" class=\"absolute left-3 top-3 w-5 h-5 text-gray-400\"></i>\n
+                            </div>\n </div>\n\n <!-- Divider -->\n <div class=\"border-t border-gray-200\"></div>\n\n
+                        <!-- Sort -->\n <div>\n <label class=\"block text-sm font-semibold text-gray-900 mb-3\">Sort
+                                By</label>\n <select x-model=\"sortBy\"\n class=\"w-full px-4 py-2.5 rounded-lg border
+                                border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20
+                                transition-all\">\n <option value=\"featured\">Featured</option>\n <option
+                                    value=\"price-low\">Price: Low to High</option>\n <option value=\"price-high\">
+                                    Price: High to Low</option>\n <option value=\"name\">Name (A-Z)</option>\n
+                            </select>\n </div>\n\n <!-- Divider -->\n <div class=\"border-t border-gray-200\"></div>\n\n
+                        <!-- Categories -->\n <div>\n <label class=\"block text-sm font-semibold text-gray-900
+                                mb-3\">Categories</label>\n <div class=\"space-y-2 max-h-64 overflow-y-auto pr-2
+                                custom-scrollbar\">\n <template x-for=\"category in categories\" :key=\"category.id
+                                    || 'all' \">\n <label class=\"flex items-center cursor-pointer group p-2.5
+                                        rounded-lg hover:bg-white/50 transition-colors\">\n <input type=\"radio\"
+                                            name=\"category\" :value=\"category.id\" x-model=\"selectedCategory\"
+                                            class=\"sr-only\">\n <span class=\"w-5 h-5 border-2 border-gray-300
+                                            rounded-full mr-3 flex items-center justify-center
+                                            group-hover:border-primary transition-colors\"\n
+                                            :class=\"{ 'border-primary bg-primary' : selectedCategory===category.id
+                                            }\">\n <span class=\"w-2.5 h-2.5 bg-white rounded-full\"
+                                                x-show=\"selectedCategory===category.id\"></span>\n </span>\n <span
+                                            class=\"text-sm text-gray-700 group-hover:text-primary transition-colors
+                                            font-medium\" x-text=\"category.name\"></span>\n </label>\n </template>\n
+                            </div>\n </div>\n\n <!-- Divider -->\n <div class=\"border-t border-gray-200\"></div>\n\n
+                        <!-- Price Range -->\n <div>\n <div class=\"flex justify-between items-center mb-3\">\n <label
+                                    class=\"text-sm font-semibold text-gray-900\">Max Price</label>\n <span
+                                    class=\"text-primary font-bold text-lg\" x-text=\"'$' + priceRange\"></span>\n
+                            </div>\n <input type=\"range\" min=\"0\" max=\"200\" step=\"10\" x-model=\"priceRange\"\n
+                                class=\"w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer
+                                accent-primary\">\n <div class=\"flex justify-between text-xs text-gray-500 mt-2\">\n
+                                <span>$0</span>\n <span>$200</span>\n </div>\n </div>\n\n <!-- Clear Filters -->\n
+                        <button @click=\"clearFilters()\" class=\"w-full px-4 py-2.5 rounded-lg border border-gray-300
+                            text-gray-700 hover:bg-gray-50 font-medium transition-colors flex items-center
+                            justify-center gap-2\">\n <i data-lucide=\"x\" class=\"w-4 h-4\"></i>\n Clear All Filters\n
+                        </button>\n </div>\n </aside>\n\n <!-- Products Grid -->\n <main class=\"flex-1\">\n
+                    <!-- Loading State -->\n <div x-show=\"loading\" class=\"grid gap-6\"\n :class=\"viewMode==='grid'
+                        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1' \">\n <template x-for=\"i in
+                            6\">\n <div class=\"glass-light rounded-2xl overflow-hidden\">\n <div class=\"skeleton
+                                    h-80\"></div>\n <div class=\"p-6 space-y-3\">\n <div class=\"skeleton h-4 w-3/4\">
+                                    </div>\n <div class=\"skeleton h-6 w-1/2\"></div>\n </div>\n </div>\n </template>\n
+                    </div>\n\n <!-- Empty State -->\n <div x-show=\"!loading && products.length===0\"
+                        class=\"text-center py-20 glass-light rounded-3xl\" x-cloak>\n <div class=\"inline-flex
+                            items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4\">\n <i
+                                data-lucide=\"search-x\" class=\"w-10 h-10 text-gray-400\"></i>\n </div>\n <h3
+                            class=\"text-2xl font-display font-bold text-gray-900 mb-2\">No plants found</h3>\n <p
+                            class=\"text-gray-600 mb-6\">Try adjusting your filters or search query</p>\n <button
+                            @click=\"clearFilters()\" class=\"btn btn-primary\">\n <i data-lucide=\"refresh-cw\"
+                                class=\"w-4 h-4\"></i>\n Clear All Filters\n </button>\n </div>\n\n <!-- Grid View -->\n
+                    <div x-show=\"!loading && products.length> 0 && viewMode === 'grid'\"\n class=\"grid grid-cols-1
+                        sm:grid-cols-2 lg:grid-cols-3 gap-6\" x-cloak>\n <template x-for=\"product in products\"
+                            :key=\"product.id\">\n <div class=\"group\" data-aos=\"fade-up\">\n <a
+                                    :href=\"'/product-detail.html?id=' + product.id\"\n                                    class=\"block glass-light rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300\">\n                                    <!-- Image -->\n                                    <div class=\"relative h-80 overflow-hidden bg-gray-50\">\n                                        <img :src=\"product.images && product.images.length > 0 ? product.images[0] : '
+                                    https://via.placeholder.com/400'\"\n :alt=\"product.name\"\n class=\"w-full h-full
+                                    object-cover group-hover:scale-110 transition-transform duration-700\">\n \n
+                                    <!-- Quick Add Button -->\n <button @click.prevent=\"$store.cart.add(product)\"\n
+                                        class=\"absolute bottom-4 right-4 w-12 h-12 rounded-full bg-white shadow-lg flex
+                                        items-center justify-center opacity-0 group-hover:opacity-100 transition-all
+                                        duration-300 hover:bg-primary hover:text-white transform translate-y-2
+                                        group-hover:translate-y-0\">\n <i data-lucide=\"shopping-bag\" class=\"w-5
+                                            h-5\"></i>\n </button>\n \n <!-- Category Badge -->\n <div class=\"absolute
+                                        top-4 left-4\">\n <span class=\"px-3 py-1 rounded-full glass-light text-gray-700
+                                            text-xs font-semibold uppercase tracking-wider\"\n x-text=\"product.category
+                                            ? product.category.name : 'Plant' \"></span>\n </div>\n </div>\n \n
+                            <!-- Content -->\n <div class=\"p-6\">\n <h3 class=\"text-lg font-display font-bold
+                                    text-gray-900 mb-2 group-hover:text-primary transition-colors line-clamp-1\"\n
+                                    x-text=\"product.name\"></h3>\n <p class=\"text-sm text-gray-600 mb-4 line-clamp-2\"
+                                    x-text=\"product.description\"></p>\n <div class=\"flex justify-between
+                                    items-center\">\n <span class=\"text-2xl font-display font-bold text-gray-900\"\n
+                                        x-text=\"'$' + Number(product.price).toFixed(2)\"></span>\n <div class=\"flex
+                                        items-center gap-1 text-amber-500\">\n <i data-lucide=\"star\" class=\"w-4 h-4
+                                            fill-current\"></i>\n <span class=\"text-sm font-semibold
+                                            text-gray-700\">4.8</span>\n </div>\n </div>\n </div>\n </a>\n </div>\n
+                    </template>\n </div>\n\n <!-- List View -->\n <div x-show=\"!loading && products.length> 0 &&
+                viewMode === 'list'\" class=\"space-y-4\" x-cloak>\n <template x-for=\"product in products\"
+                    :key=\"product.id\">\n <div class=\"group\" data-aos=\"fade-up\">\n <a
+                            :href=\"'/product-detail.html?id=' + product.id\"\n                                    class=\"block glass-light rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300\">\n                                    <div class=\"flex flex-col sm:flex-row\">\n                                        <!-- Image -->\n                                        <div class=\"relative w-full sm:w-64 h-64 sm:h-auto overflow-hidden bg-gray-50 flex-shrink-0\">\n                                            <img :src=\"product.images && product.images.length > 0 ? product.images[0] : '
+                            https://via.placeholder.com/400'\"\n :alt=\"product.name\"\n class=\"w-full h-full
+                            object-cover group-hover:scale-110 transition-transform duration-700\">\n \n
+                            <!-- Category Badge -->\n <div class=\"absolute top-4 left-4\">\n <span class=\"px-3 py-1
+                                    rounded-full glass-light text-gray-700 text-xs font-semibold uppercase
+                                    tracking-wider\"\n x-text=\"product.category ? product.category.name : 'Plant'
+                                    \"></span>\n </div>\n </div>\n\n <!-- Content -->\n <div class=\"p-6 flex-1 flex
+                        flex-col justify-between\">\n <div>\n <h3 class=\"text-2xl font-display font-bold text-gray-900
+                                mb-2 group-hover:text-primary transition-colors\"\n x-text=\"product.name\"></h3>\n <p
+                                class=\"text-gray-600 mb-4 line-clamp-3\" x-text=\"product.description\"></p>\n </div>\n
+                        <div class=\"flex justify-between items-center\">\n <div>\n <span class=\"text-3xl font-display
+                                    font-bold text-gray-900\"\n x-text=\"'$' +
+                                    Number(product.price).toFixed(2)\"></span>\n <div class=\"flex items-center gap-1
+                                    text-amber-500 mt-1\">\n <i data-lucide=\"star\" class=\"w-4 h-4
+                                        fill-current\"></i>\n <span class=\"text-sm font-semibold
+                                        text-gray-700\">4.8</span>\n </div>\n </div>\n <button
+                                @click.prevent=\"$store.cart.add(product)\" class=\"btn btn-primary\">\n <i
+                                    data-lucide=\"shopping-bag\" class=\"w-5 h-5\"></i>\n Add to Cart\n </button>\n
+                        </div>\n </div>\n </div>\n </a>\n </div>\n </template>\n </div>\n </main>\n </div>\n </div>\n\n
+    <!-- Mobile Filter Button (Fixed) -->\n <button @click=\"showMobileFilters=true\"\n class=\"lg:hidden fixed bottom-6
+        right-6 w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center z-50
+        hover:scale-110 transition-transform\">\n <i data-lucide=\"filter\" class=\"w-6 h-6\"></i>\n <span
+            x-show=\"selectedCategory || priceRange < 200\" \n class=\"absolute -top-1 -right-1 w-5 h-5 bg-red-500
+            rounded-full text-xs flex items-center justify-center\">!</span>\n </button>\n\n
+    <!-- Mobile Filter Sheet -->\n <div x-show=\"showMobileFilters\" @click=\"showMobileFilters=false\"\n
+        class=\"lg:hidden fixed inset-0 bg-black/50 z-50\" x-cloak\n x-transition:enter=\"transition ease-out
+        duration-300\"\n x-transition:enter-start=\"opacity-0\"\n x-transition:enter-end=\"opacity-100\">\n <div
+            @click.stop class=\"absolute bottom-0 left-0 right-0 glass-medium rounded-t-3xl p-6 max-h-[80vh]
+            overflow-y-auto\"\n x-transition:enter=\"transition ease-out duration-300\"\n
+            x-transition:enter-start=\"translate-y-full\"\n x-transition:enter-end=\"translate-y-0\">\n \n
+            <!-- Header -->\n <div class=\"flex justify-between items-center mb-6\">\n <h3 class=\"text-xl font-display
+                    font-bold text-gray-900\">Filters</h3>\n <button @click=\"showMobileFilters=false\" class=\"w-10
+                    h-10 rounded-full bg-gray-100 flex items-center justify-center\">\n <i data-lucide=\"x\" class=\"w-5
+                        h-5\"></i>\n </button>\n </div>\n\n <div class=\"space-y-6\">\n <!-- Search -->\n <div>\n <label
+                        class=\"block text-sm font-semibold text-gray-900 mb-3\">Search</label>\n <div
+                        class=\"relative\">\n <input type=\"text\" x-model=\"searchQuery\" placeholder=\"Search
+                            plants...\"\n class=\"w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200
+                            focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all\">\n <i
+                            data-lucide=\"search\" class=\"absolute left-3 top-3 w-5 h-5 text-gray-400\"></i>\n </div>\n
+                </div>\n\n <!-- Sort -->\n <div>\n <label class=\"block text-sm font-semibold text-gray-900 mb-3\">Sort
+                        By</label>\n <select x-model=\"sortBy\"\n class=\"w-full px-4 py-2.5 rounded-lg border
+                        border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all\">\n
+                        <option value=\"featured\">Featured</option>\n <option value=\"price-low\">Price: Low to High
+                        </option>\n <option value=\"price-high\">Price: High to Low</option>\n <option value=\"name\">
+                            Name (A-Z)</option>\n </select>\n </div>\n\n <!-- Categories -->\n <div>\n <label
+                        class=\"block text-sm font-semibold text-gray-900 mb-3\">Categories</label>\n <div
+                        class=\"space-y-2 max-h-48 overflow-y-auto pr-2\">\n <template x-for=\"category in categories\"
+                            :key=\"category.id || 'all' \">\n <label class=\"flex items-center cursor-pointer group
+                                p-2.5 rounded-lg hover:bg-white/50 transition-colors\">\n <input type=\"radio\"
+                                    name=\"category-mobile\" :value=\"category.id\" x-model=\"selectedCategory\"
+                                    class=\"sr-only\">\n <span class=\"w-5 h-5 border-2 border-gray-300 rounded-full
+                                    mr-3 flex items-center justify-center group-hover:border-primary
+                                    transition-colors\"\n :class=\"{ 'border-primary bg-primary' :
+                                    selectedCategory===category.id }\">\n <span class=\"w-2.5 h-2.5 bg-white
+                                        rounded-full\" x-show=\"selectedCategory===category.id\"></span>\n </span>\n
+                                <span class=\"text-sm text-gray-700 group-hover:text-primary transition-colors
+                                    font-medium\" x-text=\"category.name\"></span>\n </label>\n </template>\n </div>\n
+                </div>\n\n <!-- Price Range -->\n <div>\n <div class=\"flex justify-between items-center mb-3\">\n
+                        <label class=\"text-sm font-semibold text-gray-900\">Max Price</label>\n <span
+                            class=\"text-primary font-bold text-lg\" x-text=\"'$' + priceRange\"></span>\n </div>\n
+                    <input type=\"range\" min=\"0\" max=\"200\" step=\"10\" x-model=\"priceRange\"\n class=\"w-full h-2
+                        bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary\">\n <div class=\"flex
+                        justify-between text-xs text-gray-500 mt-2\">\n <span>$0</span>\n <span>$200</span>\n </div>\n
+                </div>\n\n <!-- Actions -->\n <div class=\"flex gap-3 pt-4\">\n <button @click=\"clearFilters()\"
+                        class=\"flex-1 px-4 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50
+                        font-medium transition-colors\">\n Clear All\n </button>\n <button
+                        @click=\"showMobileFilters=false\" class=\"flex-1 btn btn-primary\">\n Apply Filters\n
+                    </button>\n </div>\n </div>\n </div>\n </div>\n </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20" x-data="{ 
+            products: [], 
+            categories: [],
+            selectedCategory: null,
+            priceRange: 200,
+            searchQuery: '',
+            sortBy: 'featured',
+            loading: true,
+            viewMode: 'grid',
+            showFilters: false,
+            
+            async init() {
+                await this.fetchCategories();
+                await this.fetchProducts();
+                this.$watch('selectedCategory', () => this.fetchProducts());
+                this.$watch('priceRange', () => this.fetchProducts());
+                this.$watch('searchQuery', () => this.fetchProducts());
+                this.$watch('sortBy', () => this.sortProducts());
+            },
+
+            async fetchCategories() {
+                try {
+                    const response = await axios.get('/api/categories');
+                    this.categories = [{id: null, name: 'All Categories'}, ...response.data.data];
+                } catch (error) {
+                    console.error('Failed to fetch categories:', error);
+                }
+            },
+
+            async fetchProducts() {
+                this.loading = true;
+                try {
+                    const params = {
+                        max_price: this.priceRange,
+                        search: this.searchQuery
+                    };
+                    
+                    if (this.selectedCategory) {
+                        params.category = this.selectedCategory;
+                    }
+
+                    const response = await axios.get('/api/products', { params });
+                    this.products = response.data.data;
+                    this.sortProducts();
+                } catch (error) {
+                    console.error('Failed to fetch products:', error);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            sortProducts() {
+                if (this.sortBy === 'price-low') {
+                    this.products.sort((a, b) => a.price - b.price);
+                } else if (this.sortBy === 'price-high') {
+                    this.products.sort((a, b) => b.price - a.price);
+                } else if (this.sortBy === 'name') {
+                    this.products.sort((a, b) => a.name.localeCompare(b.name));
+                }
+            },
+
+            clearFilters() {
+                this.selectedCategory = null;
+                this.priceRange = 200;
+                this.searchQuery = '';
+                this.sortBy = 'featured';
+            }
+         }">
+
+        <!-- Floating Glass Toolbar (Sticky) -->
+        <div class="sticky top-20 z-40 mb-8" data-aos="fade-down">
+            <div class="glass-medium rounded-2xl p-4 shadow-glass-lg">
+                <!-- Top Row: Search, Sort, View Toggle -->
+                <div class="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+                    <!-- Search -->
+                    <div class="flex-1 relative">
+                        <input type="text" x-model="searchQuery" placeholder="Search plants..."
+                            class="input-glass w-full pl-10 pr-4">
+                        <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-gray-400"></i>
+                    </div>
+
+                    <!-- Sort Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open"
+                            class="btn btn-glass w-full lg:w-auto justify-between lg:justify-center gap-2">
+                            <i data-lucide="arrow-up-down" class="w-4 h-4"></i>
+                            <span
+                                x-text="sortBy === 'featured' ? 'Featured' : sortBy === 'price-low' ? 'Price: Low to High' : sortBy === 'price-high' ? 'Price: High to Low' : 'Name'"></span>
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div x-show="open" @click.away="open = false" x-cloak
+                            class="absolute right-0 mt-2 w-56 glass-strong rounded-xl shadow-glass-lg overflow-hidden z-50"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 scale-95"
+                            x-transition:enter-end="opacity-100 scale-100">
+                            <button @click="sortBy = 'featured'; open = false"
+                                :class="sortBy === 'featured' ? 'bg-primary-500/20 text-primary-700' : 'text-gray-700 hover:bg-white/50'"
+                                class="w-full px-4 py-3 text-left text-sm font-medium transition-colors">
+                                Featured
+                            </button>
+                            <button @click="sortBy = 'price-low'; open = false"
+                                :class="sortBy === 'price-low' ? 'bg-primary-500/20 text-primary-700' : 'text-gray-700 hover:bg-white/50'"
+                                class="w-full px-4 py-3 text-left text-sm font-medium transition-colors">
+                                Price: Low to High
+                            </button>
+                            <button @click="sortBy = 'price-high'; open = false"
+                                :class="sortBy === 'price-high' ? 'bg-primary-500/20 text-primary-700' : 'text-gray-700 hover:bg-white/50'"
+                                class="w-full px-4 py-3 text-left text-sm font-medium transition-colors">
+                                Price: High to Low
+                            </button>
+                            <button @click="sortBy = 'name'; open = false"
+                                :class="sortBy === 'name' ? 'bg-primary-500/20 text-primary-700' : 'text-gray-700 hover:bg-white/50'"
+                                class="w-full px-4 py-3 text-left text-sm font-medium transition-colors">
+                                Name (A-Z)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Toggle -->
+                    <button @click="showFilters = !showFilters" class="btn btn-glass lg:w-auto">
+                        <i data-lucide="filter" class="w-4 h-4"></i>
+                        <span>Filters</span>
+                        <span x-show="selectedCategory || priceRange < 200"
+                            class="ml-1 px-2 py-0.5 bg-primary-500 text-white text-xs rounded-full">
+                            Active
+                        </span>
+                    </button>
+
+                    <!-- View Toggle -->
+                    <div class="flex items-center gap-2 bg-white/30 rounded-lg p-1">
+                        <button @click="viewMode = 'grid'"
+                            :class="viewMode === 'grid' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-600 hover:bg-white/50'"
+                            class="p-2 rounded-md transition-all duration-200">
+                            <i data-lucide="grid-3x3" class="w-5 h-5"></i>
+                        </button>
+                        <button @click="viewMode = 'list'"
+                            :class="viewMode === 'list' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-600 hover:bg-white/50'"
+                            class="p-2 rounded-md transition-all duration-200">
+                            <i data-lucide="list" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Expandable Filter Panel -->
+                <div x-show="showFilters" x-collapse x-cloak class="mt-4 pt-4 border-t border-white/20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Categories -->
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <i data-lucide="tag" class="w-4 h-4"></i>
+                                Categories
+                            </h3>
+                            <div class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                <template x-for="category in categories" :key="category.id || 'all'">
+                                    <label
+                                        class="flex items-center cursor-pointer group p-2 rounded-lg hover:bg-white/50 transition-colors">
+                                        <input type="radio" name="category" :value="category.id"
+                                            x-model="selectedCategory" class="sr-only">
+                                        <span
+                                            class="w-5 h-5 border-2 border-gray-300 rounded-full mr-3 flex items-center justify-center group-hover:border-primary-500 transition-colors"
+                                            :class="{ 'border-primary-600 bg-primary-600': selectedCategory === category.id }">
+                                            <span class="w-2.5 h-2.5 bg-white rounded-full"
+                                                x-show="selectedCategory === category.id"></span>
+                                        </span>
+                                        <span
+                                            class="text-sm text-gray-700 group-hover:text-primary-700 transition-colors font-medium"
+                                            x-text="category.name"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                    <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                                    Max Price
+                                </h3>
+                                <span class="text-primary-600 font-bold text-lg" x-text="'$' + priceRange"></span>
+                            </div>
+                            <input type="range" min="0" max="200" step="10" x-model="priceRange"
+                                class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary-600">
+                            <div class="flex justify-between text-xs text-gray-500 mt-2">
+                                <span>$0</span>
+                                <span>$200</span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex flex-col justify-end gap-2">
+                            <button @click="clearFilters()" class="btn btn-ghost w-full">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                                Clear All Filters
+                            </button>
+                            <button @click="showFilters = false" class="btn btn-primary w-full">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                                Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Count -->
+                <div class="mt-4 pt-4 border-t border-white/20 text-sm text-gray-600 text-center">
+                    <span x-show="!loading">
+                        Showing <span class="font-semibold text-gray-900" x-text="products.length"></span>
+                        <span x-text="products.length === 1 ? 'product' : 'products'"></span>
+                    </span>
+                    <span x-show="loading" class="flex items-center justify-center gap-2">
+                        <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+                        Loading products...
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="loading" class="grid gap-6"
+            :class="viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'">
+            <template x-for="i in 8">
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="skeleton h-64"></div>
+                    <div class="p-6 space-y-3">
+                        <div class="skeleton h-4 w-3/4"></div>
+                        <div class="skeleton h-6 w-1/2"></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="!loading && products.length === 0" class="text-center py-20 glass-light rounded-3xl" x-cloak>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+                <i data-lucide="search-x" class="w-10 h-10 text-gray-400"></i>
+            </div>
+            <h3 class="text-2xl font-heading font-bold text-gray-900 mb-2">No plants found</h3>
+            <p class="text-gray-600 mb-6">Try adjusting your filters or search query</p>
+            <button @click="clearFilters()" class="btn btn-primary">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Clear All Filters
+            </button>
+        </div>
+
+        <!-- Grid View -->
+        <div x-show="!loading && products.length > 0 && viewMode === 'grid'"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" x-cloak>
+            <template x-for="product in products" :key="product.id">
+                <article class="card-glass rounded-2xl overflow-hidden group" data-aos="fade-up">
+                    <a :href="'/product-detail.html?id=' + product.id"
+                        class="block relative h-72 overflow-hidden bg-gray-100">
+                        <img :src="product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/400'"
+                            :alt="product.name"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+
+                        <!-- Quick Actions -->
+                        <div
+                            class="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button @click.prevent="$store.cart.add(product)"
+                                class="w-10 h-10 rounded-full glass-strong flex items-center justify-center text-primary-600 hover:bg-primary-600 hover:text-white transition-colors">
+                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Category Badge -->
+                        <div class="absolute top-4 left-4">
+                            <span
+                                class="glass-light px-3 py-1 rounded-full text-gray-700 text-xs font-semibold uppercase tracking-wider"
+                                x-text="product.category ? product.category.name : 'Plant'"></span>
+                        </div>
+                    </a>
+
+                    <div class="p-6">
+                        <a :href="'/product-detail.html?id=' + product.id">
+                            <h3 class="text-lg font-heading font-bold text-gray-900 mb-2 hover:text-primary-600 transition-colors line-clamp-1"
+                                x-text="product.name"></h3>
+                        </a>
+                        <p class="text-sm text-gray-600 mb-4 line-clamp-2" x-text="product.description"></p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-heading font-bold text-gray-900"
+                                x-text="'$' + Number(product.price).toFixed(2)"></span>
+                            <div class="flex items-center gap-1 text-accent-500">
+                                <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                                <span class="text-sm font-semibold">4.8</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </template>
+        </div>
+
+        <!-- List View -->
+        <div x-show="!loading && products.length > 0 && viewMode === 'list'" class="space-y-4" x-cloak>
+            <template x-for="product in products" :key="product.id">
+                <article class="card-glass rounded-2xl overflow-hidden group flex flex-col sm:flex-row"
+                    data-aos="fade-up">
+                    <a :href="'/product-detail.html?id=' + product.id"
+                        class="relative w-full sm:w-64 h-64 sm:h-auto overflow-hidden bg-gray-100 flex-shrink-0">
+                        <img :src="product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/400'"
+                            :alt="product.name"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+
+                        <!-- Category Badge -->
+                        <div class="absolute top-4 left-4">
+                            <span
+                                class="glass-light px-3 py-1 rounded-full text-gray-700 text-xs font-semibold uppercase tracking-wider"
+                                x-text="product.category ? product.category.name : 'Plant'"></span>
+                        </div>
+                    </a>
+
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <a :href="'/product-detail.html?id=' + product.id">
+                                <h3 class="text-2xl font-heading font-bold text-gray-900 mb-2 hover:text-primary-600 transition-colors"
+                                    x-text="product.name"></h3>
+                            </a>
+                            <p class="text-gray-600 mb-4 line-clamp-3" x-text="product.description"></p>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-3xl font-heading font-bold text-gray-900"
+                                    x-text="'$' + Number(product.price).toFixed(2)"></span>
+                                <div class="flex items-center gap-1 text-accent-500 mt-1">
+                                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                                    <span class="text-sm font-semibold">4.8</span>
+                                </div>
+                            </div>
+                            <button @click="$store.cart.add(product)" class="btn btn-primary">
+                                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            </template>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+            lucide.createIcons();
+            AOS.init({
+                once: true,
+                offset: 50,
+                duration: 600,
+            });
+        });
+    </script>
+</body>
+
+</html>

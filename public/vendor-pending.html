@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Pending - Nursery App</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden text-center p-8 space-y-6">
+
+        <div class="mx-auto w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center">
+            <i data-lucide="clock" class="w-10 h-10 text-yellow-600"></i>
+        </div>
+
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Application Pending</h1>
+            <p class="mt-2 text-gray-600">
+                Your vendor application has been received and is currently under review by our administrators.
+            </p>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 border border-gray-100">
+            <p>
+                This process usually takes 24-48 hours. You will be notified via email once your store status changes.
+            </p>
+        </div>
+
+        <div class="space-y-3">
+            <a href="/"
+                class="block w-full py-3 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Return to Homepage
+            </a>
+
+            <button onclick="Alpine.store('auth').logout()"
+                class="block w-full py-3 px-4 text-red-600 text-sm font-medium hover:text-red-700 transition-colors">
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

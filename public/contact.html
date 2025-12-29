@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - NurseryApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased">
+
+    <!-- Navigation -->
+    <div id="header-placeholder"></div>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-12 overflow-hidden">
+        <!-- Liquid Blobs -->
+        <div
+            class="absolute top-0 right-0 w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
+        </div>
+        <div
+            class="absolute bottom-0 left-0 w-96 h-96 bg-secondary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <h1 class="text-4xl md:text-6xl font-display font-bold text-earth-900 mb-6" data-aos="fade-up">Get in Touch
+            </h1>
+            <p class="text-xl text-earth-700 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">Have a question
+                about plant care or your order? We'd love to hear from you.</p>
+        </div>
+    </section>
+
+    <!-- Contact Content -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+                <!-- Contact Info -->
+                <div class="space-y-8">
+                    <div class="glass-card p-8 rounded-2xl flex items-start gap-6 hover:-translate-y-1 transition-transform"
+                        data-aos="fade-right" data-aos-delay="100">
+                        <div
+                            class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 flex-shrink-0">
+                            <i data-lucide="map-pin" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-earth-900 mb-2">Visit Our Nursery</h3>
+                            <p class="text-earth-600">123 Green Street<br>Botanical District<br>New York, NY 10001</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-2xl flex items-start gap-6 hover:-translate-y-1 transition-transform"
+                        data-aos="fade-right" data-aos-delay="200">
+                        <div
+                            class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 flex-shrink-0">
+                            <i data-lucide="mail" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-earth-900 mb-2">Email Us</h3>
+                            <p class="text-earth-600">hello@nurseryapp.com<br>support@nurseryapp.com</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-2xl flex items-start gap-6 hover:-translate-y-1 transition-transform"
+                        data-aos="fade-right" data-aos-delay="300">
+                        <div
+                            class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 flex-shrink-0">
+                            <i data-lucide="phone" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-earth-900 mb-2">Call Us</h3>
+                            <p class="text-earth-600">+1 (555) 123-4567<br>Mon-Fri, 9am - 6pm EST</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="glass-card p-8 rounded-2xl" data-aos="fade-left">
+                    <h3 class="text-2xl font-bold text-earth-900 mb-6">Send us a Message</h3>
+                    <form class="space-y-6" x-data="{ loading: false }"
+                        @submit.prevent="loading = true; setTimeout(() => { loading = false; alert('Message sent!'); }, 1500)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-earth-700 mb-2">First Name</label>
+                                <input type="text"
+                                    class="w-full px-4 py-3 rounded-lg bg-white/50 border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                                    required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-earth-700 mb-2">Last Name</label>
+                                <input type="text"
+                                    class="w-full px-4 py-3 rounded-lg bg-white/50 border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                                    required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-earth-700 mb-2">Email Address</label>
+                            <input type="email"
+                                class="w-full px-4 py-3 rounded-lg bg-white/50 border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-earth-700 mb-2">Subject</label>
+                            <select
+                                class="w-full px-4 py-3 rounded-lg bg-white/50 border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all">
+                                <option>General Inquiry</option>
+                                <option>Order Support</option>
+                                <option>Plant Care Question</option>
+                                <option>Wholesale</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-earth-700 mb-2">Message</label>
+                            <textarea rows="4"
+                                class="w-full px-4 py-3 rounded-lg bg-white/50 border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                                required></textarea>
+                        </div>
+                        <button type="submit"
+                            class="w-full btn-shine bg-primary-600 text-white font-bold py-4 rounded-lg hover:bg-primary-700 transition-all hover:shadow-lg flex items-center justify-center"
+                            :disabled="loading">
+                            <span x-show="!loading">Send Message</span>
+                            <span x-show="loading" class="flex items-center gap-2">
+                                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Sending...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Placeholder -->
+    <section class="h-96 w-full bg-gray-200 relative overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1600&q=80" alt="Map"
+            class="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div
+                class="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-xl flex items-center gap-2 animate-bounce">
+                <i data-lucide="map-pin" class="w-5 h-5 text-primary-600"></i>
+                <span class="font-bold text-earth-900">Find us here</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+
+            // Initialize after components are loaded
+            lucide.createIcons();
+            AOS.init({
+                duration: 800,
+                once: true,
+                offset: 50
+            });
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

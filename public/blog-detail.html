@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Detail - Nursery App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased" x-data="{ mobileMenuOpen: false }">
+
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <div class="pt-32 pb-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ 
+            post: {}, 
+            loading: true,
+            
+            async init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const slug = urlParams.get('slug');
+                
+                if (!slug) {
+                    window.location.href = '/blog';
+                    return;
+                }
+
+                try {
+                    const response = await api.get('/posts/' + slug);
+                    this.post = response.data.data;
+                } catch (error) {
+                    console.error('Failed to fetch post:', error);
+                    window.location.href = '/blog';
+                } finally {
+                    this.loading = false;
+                    this.$nextTick(() => lucide.createIcons());
+                }
+            }
+        }">
+
+        <!-- Loading State -->
+        <div x-show="loading" class="animate-pulse space-y-8">
+            <div class="h-8 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-96 bg-gray-200 rounded-2xl w-full"></div>
+            <div class="space-y-4">
+                <div class="h-4 bg-gray-200 rounded w-full"></div>
+                <div class="h-4 bg-gray-200 rounded w-full"></div>
+                <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+            </div>
+        </div>
+
+        <!-- Post Content -->
+        <article x-show="!loading" class="bg-white rounded-2xl shadow-sm overflow-hidden" x-cloak>
+            <!-- Hero Image -->
+            <div class="relative h-96 w-full">
+                <img :src="post.image" :alt="post.title" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-8 text-white">
+                    <div class="flex items-center gap-4 mb-4 text-sm font-medium text-primary-200">
+                        <span
+                            class="bg-primary-600/80 backdrop-blur-sm px-3 py-1 rounded-full text-white">Article</span>
+                        <span x-text="new Date(post.published_at).toLocaleDateString()"></span>
+                        <span>•</span>
+                        <span x-text="post.user ? post.user.name : 'Author'"></span>
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-display font-bold leading-tight" x-text="post.title"></h1>
+                </div>
+            </div>
+
+            <!-- Content Body -->
+            <div class="p-8 md:p-12 prose prose-lg prose-earth max-w-none">
+                <div x-html="post.content"></div>
+            </div>
+
+            <!-- Share/Footer -->
+            <div class="bg-gray-50 p-8 border-t border-gray-100 flex justify-between items-center">
+                <a href="/blog" class="text-primary-600 font-bold hover:text-primary-700 flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Blog
+                </a>
+                <div class="flex gap-4">
+                    <button class="text-gray-400 hover:text-primary-600 transition-colors"><i data-lucide="share-2"
+                            class="w-5 h-5"></i></button>
+                    <button class="text-gray-400 hover:text-primary-600 transition-colors"><i data-lucide="bookmark"
+                            class="w-5 h-5"></i></button>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <div id="footer-placeholder"></div>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+            lucide.createIcons();
+            AOS.init();
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+<!-- Toast Container -->
+<div x-data class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <template x-for="toast in $store.toast.toasts" :key="toast.id">
+        <div class="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300"
+            :class="{
+                'bg-green-500 text-white': toast.type === 'success',
+                'bg-red-500 text-white': toast.type === 'error',
+                'bg-blue-500 text-white': toast.type === 'info'
+            }" x-transition:enter="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100"
+            x-transition:leave="translate-y-full opacity-0" x-transition:leave-end="translate-y-full opacity-0">
+
+            <!-- Icons -->
+            <template x-if="toast.type === 'success'">
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+            </template>
+            <template x-if="toast.type === 'error'">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+            </template>
+
+            <span class="font-medium text-sm" x-text="toast.message"></span>
+
+            <button @click="$store.toast.remove(toast.id)" class="ml-2 hover:opacity-75">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </template>
+</div>

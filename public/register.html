@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Nursery App</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body class="bg-earth-100 text-earth-900 antialiased" x-data="{ 
+        name: '',
+        email: '', 
+        phone: '',
+        date_of_birth: '',
+        password: '', 
+        loading: false, 
+        
+        async submit() {
+            this.loading = true;
+            try {
+                const result = await Alpine.store('auth').register(this.name, this.email, this.password, this.phone, this.date_of_birth);
+                if (result.success) {
+                    showToast('Account created successfully!', 'success');
+                    window.location.href = '/';
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (e) {
+                showToast('An unexpected error occurred.', 'error');
+            } finally {
+                this.loading = false;
+            }
+        }
+      }">
+
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content -->
+    <div class="min-h-screen pt-20 pb-12 flex flex-col justify-center sm:px-6 lg:px-8 relative overflow-hidden">
+        <!-- Liquid Blobs -->
+        <div
+            class="absolute top-0 left-0 w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
+        </div>
+        <div
+            class="absolute bottom-0 right-0 w-96 h-96 bg-secondary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000">
+        </div>
+
+        <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+            <div class="text-center mb-8">
+                <div
+                    class="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center text-white shadow-lg mb-4">
+                    <i data-lucide="leaf" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-3xl font-display font-bold text-earth-900">Create Account</h2>
+                <p class="mt-2 text-earth-600">Join our community of plant lovers</p>
+            </div>
+
+            <div class="glass-card py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10" data-aos="fade-up">
+                <form class="space-y-6" @submit.prevent="submit">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-earth-700">Full Name</label>
+                            <div class="mt-1 relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="user" class="h-5 w-5 text-gray-400"></i>
+                                </div>
+                                <input id="name" name="name" type="text" required x-model="name"
+                                    class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white/50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:text-sm"
+                                    placeholder="John Doe">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-earth-700">Email address</label>
+                            <div class="mt-1 relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="mail" class="h-5 w-5 text-gray-400"></i>
+                                </div>
+                                <input id="email" name="email" type="email" autocomplete="email" required
+                                    x-model="email"
+                                    class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white/50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:text-sm"
+                                    placeholder="you@example.com">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-earth-700">Phone Number</label>
+                            <div class="mt-1 relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="phone" class="h-5 w-5 text-gray-400"></i>
+                                </div>
+                                <input id="phone" name="phone" type="tel" x-model="phone"
+                                    class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white/50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:text-sm"
+                                    placeholder="+1 (555) 000-0000">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="date_of_birth" class="block text-sm font-medium text-earth-700">Date of
+                                Birth</label>
+                            <div class="mt-1 relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="calendar" class="h-5 w-5 text-gray-400"></i>
+                                </div>
+                                <input id="date_of_birth" name="date_of_birth" type="date" x-model="date_of_birth"
+                                    class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white/50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-earth-700">Password</label>
+                            <div class="mt-1 relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="lock" class="h-5 w-5 text-gray-400"></i>
+                                </div>
+                                <input id="password" name="password" type="password" autocomplete="new-password"
+                                    required x-model="password"
+                                    class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white/50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:text-sm"
+                                    placeholder="••••••••">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" :disabled="loading"
+                            class="btn-shine w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                            <i x-show="loading" data-lucide="loader-2" class="animate-spin -ml-1 mr-2 h-5 w-5"></i>
+                            <span x-show="!loading">Sign up</span>
+                            <span x-show="loading">Creating account...</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-earth-600">
+                        Already have an account?
+                        <a href="/login" class="font-medium text-primary-600 hover:text-primary-500">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/app.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.loadComponents();
+            lucide.createIcons();
+            AOS.init();
+        });
+    </script>
+    <div id="toast-placeholder"></div>
+</body>
+
+</html>
